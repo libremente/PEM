@@ -1,0 +1,47 @@
+﻿@using PortaleRegione.DTO.Enum
+
+<div id="btnNuovoEM" class="fixed-action-btn" style="display: block">
+    <a id="btnCreaEM" class="btn-floating btn-large blue darken-1">
+        <i class="large material-icons">add</i>
+    </a>
+</div>
+
+<div style="bottom: 0; position: fixed; right: 0; z-index: 998">
+    <ul id="dropdown2" class="dropdown-content">
+        <li>
+            <a href="#!" class="light-blue white-text" onclick="CambioStato(@((int) StatiEnum.Depositato), '@StatiEnum.Depositato')"><i class="material-icons">lock</i> Depositato</a>
+        </li>
+        <li>
+            <a href="#!" class="green white-text" onclick="CambioStato(@((int) StatiEnum.Approvato), '@StatiEnum.Approvato')"><i class="material-icons">check</i> Approva</a>
+        </li>
+        <li>
+            <a href="#!" class="green darken-3 white-text" onclick="CambioStato(@((int) StatiEnum.Approvato_Con_Modifiche), 'Approvato con modifiche')"><i class="material-icons">check</i> Approva con modifiche</a>
+        </li>
+        <li>
+            <a href="#!" class="red white-text" onclick="CambioStato(@((int) StatiEnum.Non_Approvato), 'Non approvato')"><i class="material-icons">close</i> Non approva</a>
+        </li>
+        <li>
+            <a href="#!" class="amber white-text" onclick="CambioStato(@((int) StatiEnum.Inammissibile), '@StatiEnum.Inammissibile')"><i class="material-icons">not_interested</i> Inammissibile</a>
+        </li>
+        <li>
+            <a href="#!" class="purple white-text" onclick="CambioStato(@((int) StatiEnum.Decaduto), '@StatiEnum.Decaduto')"><i class="material-icons">report</i> Decaduto</a>
+        </li>
+        <li>
+            <a href="#!" class="grey white-text" onclick="CambioStato(@((int) StatiEnum.Ritirato), '@StatiEnum.Ritirato')"><i class="material-icons">delete</i> Ritira</a>
+        </li>
+        <li>
+            <a href="#!" class="pink white-text" onclick="AssegnaA()"><i class="material-icons">cached</i> Assegna a</a>
+        </li>
+        <li>
+            <a href="#!" class="orange white-text" onclick="UgualiA()"><i class="material-icons">format_color_fill</i> Uguali</a>
+        </li>
+        <li>
+            <a href="#!" class="blue white-text" onclick="ConfirmStampa()"><i class="material-icons">print</i> Stampa</a>
+        </li>
+        <li class="divider"></li>
+        <li>
+            <a href="#!">Annulla</a>
+        </li>
+    </ul>
+    <a id="btnComandiMassiviAdmin" class="btn-large green dropdown-trigger" href="#!" data-target="dropdown2" style="display: none; min-width: 250px">STATI<i class="material-icons right">arrow_drop_down</i></a>
+</div>

@@ -1,0 +1,175 @@
+﻿@using PortaleRegione.DTO.Enum
+@model PortaleRegione.Client.Models.EmendamentiViewModel
+
+@{
+    var data_scadenza = Model.Atto.SEDUTE.Scadenza_presentazione;
+    var ordinePagina = HttpUtility.ParseQueryString(Request.Url.Query).Get("ordine");
+    var ordinePaginaEnum = (OrdinamentoEnum)Convert.ToInt16(ordinePagina);
+    if (!string.IsNullOrEmpty(ordinePagina))
+    {
+        ordinePaginaEnum = (OrdinamentoEnum)Convert.ToInt16(ordinePagina);
+    }
+    else
+    {
+        ordinePaginaEnum = OrdinamentoEnum.Presentazione;
+    }
+}
+
+@if (!Model.Data.Results.Any())
+{
+    <div class="row">
+        <div class="col s12">
+            <div class="card-panel panel-warning center">
+                <span class="center">
+                    Non ci sono emendamenti al momento
+                </span>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th></th>
+                <th></th>
+                <th>Ordine</th>
+                <th>Numero EM</th>
+                <th>Data Deposito</th>
+                <th>Stato</th>
+                <th>Tipo EM</th>
+                <th>Parte</th>
+                <th>Articolo</th>
+                <th>Comma</th>
+                <th>Lettera</th>
+                <th>Titolo</th>
+                <th>Capo</th>
+                <th>Missione</th>
+                <th>Programma</th>
+                <th>TitoloM</th>
+                <th>Area politica</th>
+                <th>Firmatari</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @foreach (var itemEM in Model.Data.Results)
+            {
+                var articolo = itemEM.ARTICOLI != null ? itemEM.ARTICOLI.Articolo : string.Empty;
+                var comma = itemEM.COMMI != null ? itemEM.COMMI.Comma : string.Empty;
+                var backgroundColore_Uguali = !string.IsNullOrEmpty(itemEM.Colore) ? string.Format("background-color: {0}", itemEM.Colore) : "";
+                <tr>
+                    <td style="@backgroundColore_Uguali" width="10"></td>
+                    <td style="padding-left: 15px">
+                        <label>
+                            <input type="checkbox" id="chk_EM_@itemEM.UIDEM" onclick="AbilitaComandiMassivi('@itemEM.UIDEM');" />
+                            <span></span>
+                        </label>
+                    </td>
+                    <td>
+                        @if (ordinePaginaEnum == OrdinamentoEnum.Presentazione)
+                        {
+                            @itemEM.OrdinePresentazione
+                        }
+                        else
+                        {
+                            @itemEM.OrdineVotazione
+                        }
+                    </td>
+                    <td>
+                        @if (Convert.ToBoolean(itemEM.EffettiFinanziari))
+                        {
+                            @Html.Raw("<i class='material-icons' style='font-size: medium;'>euro_symbol</i>")
+                        }
+                        <span class="black-text">@itemEM.DisplayTitle</span>
+                        <a onclick="openPreviewEM('@Html.Raw(itemEM.UIDEM)')">
+                            <i class='material-icons tiny'>remove_red_eye</i>
+                        </a>
+                        <input type="hidden" id="bodyEM_@itemEM.UIDEM" value="@itemEM.BodyEM"/>
+                    </td>
+                    <td class="center">
+                        @itemEM.DataDeposito
+                        @{
+                            if (!string.IsNullOrEmpty(itemEM.DataDeposito))
+                            {
+                                if (data_scadenza.HasValue)
+                                {
+                                    var data_deposito = Convert.ToDateTime(itemEM.DataDeposito);
+
+                                    if (data_deposito > data_scadenza.Value)
+                                    {
+                                        //presentato oltre i termini
+                                        <i class="material-icons red-text" title="Presentato oltre i termini">warning</i>
+                                    }
+                                }
+                            }
+                        }
+                    </td>
+                    <td>
+                        <label class="@(itemEM.STATI_EM.CssClass)T">@itemEM.STATI_EM.Stato</label>
+                    </td>
+                    <td>@itemEM.TIPI_EM.Tipo_EM</td>
+                    <td>@itemEM.PARTI_TESTO.Parte</td>
+                    <td>@articolo</td>
+                    <td>@comma</td>
+                    <td>
+                        @if (itemEM.UIDLettera.HasValue)
+                        {
+                            @itemEM.LETTERE.Lettera
+                        }
+                        else
+                        {
+                            @itemEM.NLettera
+                        }
+                    </td>
+                    <td>@itemEM.NTitolo</td>
+                    <td>@itemEM.NCapo</td>
+                    <td>@itemEM.NMissione</td>
+                    <td>@itemEM.NProgramma</td>
+                    <td>@itemEM.NTitoloB</td>
+                    <td>
+                        @*Area politica*@
+                        @if (itemEM.AreaPolitica.HasValue)
+                        {
+                            @((AreaPoliticaIntEnum) itemEM.AreaPolitica)
+                        }
+                    </td>
+                    <td>
+                        @*firmatari*@
+                    </td>
+                    <td>
+                        @*COMANDI*@
+                        <a class="btn-floating blue" href="@Url.Action("ModificaMetaDatiEmendamento", new {id = itemEM.UIDEM})" title="Modifica meta dati emendamento" style="margin: 2px">
+                            <i class="material-icons">edit</i>
+                        </a>
+                        <a class="btn-floating green" href="@Url.Action("ViewEmendamento", new {id = itemEM.UIDEM})" title="Visualizza emendamento" style="margin: 2px">
+                            <i class="material-icons">chevron_right</i>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div id="modalPreviewEM" class="modal">
+    <div class="modal-content" id="bodyPreview">
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Chiudi</a>
+    </div>
+</div>
+
+<script>
+    function openPreviewEM(uidem) {
+        console.log('OPEN')
+        var body = $('#bodyEM_' + uidem).val();
+        var panel = $('#bodyPreview');
+        panel.empty();
+        panel.append(body);
+        $("#modalPreviewEM").modal("open");
+    }
+</script>

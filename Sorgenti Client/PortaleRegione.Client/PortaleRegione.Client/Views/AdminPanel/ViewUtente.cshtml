@@ -1,0 +1,27 @@
+﻿@model PortaleRegione.DTO.Domain.PersonaDto
+
+@{
+    ViewBag.Title = Model.DisplayName;
+    var backUrl = Url.Action("RiepilogoUtenti");
+}
+
+<script>
+    $(document).ready(function() {
+        $('#btnSearch').hide();
+    });
+</script>
+
+<div class="row">
+    <div class="col l1 s2">
+        <a class="btn-floating waves-effect waves-light grey header-back" onclick="go('@backUrl')">
+            <i class="material-icons">arrow_back</i>
+        </a>
+    </div>
+    <div class="col l11 s10">
+        <h5>
+            <b>
+                <span>@ViewBag.Title</span>
+            </b>
+        </h5>
+    </div>
+</div>

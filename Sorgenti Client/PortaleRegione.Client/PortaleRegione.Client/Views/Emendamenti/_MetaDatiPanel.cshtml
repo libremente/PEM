@@ -1,0 +1,137 @@
+﻿@using PortaleRegione.DTO.Domain
+@using PortaleRegione.DTO.Enum
+@model PortaleRegione.DTO.Model.EmendamentiFormModel
+
+<div class="form-group">
+    @Html.LabelFor(s => s.Emendamento.IDParte)
+    <div class="row">
+        <div class="col s12">
+            @foreach (var partiTestoDto in Model.ListaPartiEmendabili)
+            {
+                if (partiTestoDto.IDParte == PartiEMEnum.Missione)
+                {
+                    if (!Model.Emendamento.ATTI.VIS_Mis_Prog)
+                    {
+                        continue;
+                    }
+                }
+                <label class="black-text" style="margin-left: 20px">
+                    @Html.RadioButtonFor(m => m.Emendamento.IDParte, (int) partiTestoDto.IDParte, new {onchange = string.Format("PartiTestoEmendamento_OnChange({0})", (int) partiTestoDto.IDParte)})
+                    <span>@partiTestoDto.Parte</span>
+                </label>
+            }
+        </div>
+    </div>
+    @{
+        var detailPanelVisible = Model.Emendamento.IDParte == (int) PartiEMEnum.Titolo_PDL ? "none" : "block";
+    }
+    <div class="row" id="detailsPanel" style="display: @detailPanelVisible">
+        <div class="col s12">
+            <div class="card">
+
+                <div class="card-content">
+                    @{
+                        var pnlTitoloVisible = string.IsNullOrEmpty(Model.Emendamento.NTitolo) ? "none" : "block";
+                    }
+                    <div id="pnlTitolo" style="display: @pnlTitoloVisible">
+                        @Html.LabelFor(m => m.Emendamento.NTitolo)
+                        @Html.TextBoxFor(m => m.Emendamento.NTitolo, new {onkeyup = "NTitolo_OnChange(this)"})
+                        @*@Html.ValidationMessageFor(m => m.Emendamento.NTitolo)*@
+                    </div>
+                    @{
+                        var pnlCapoVisible = string.IsNullOrEmpty(Model.Emendamento.NCapo) ? "none" : "block";
+                    }
+                    <div id="pnlCapo" style="display: @pnlCapoVisible">
+                        @Html.LabelFor(m => m.Emendamento.NCapo)
+                        @Html.TextBoxFor(m => m.Emendamento.NCapo, new {onkeyup = "NCapo_OnChange(this)"})
+                        @*@Html.ValidationMessageFor(m => m.Emendamento.NCapo)*@
+                    </div>
+                    @{
+                        var pnlArticoliVisible = Model.Emendamento.UIDArticolo.HasValue ? "block" : "none";
+                        if (pnlArticoliVisible == "block")
+                        {
+                            if (Model.Emendamento.UIDComma.HasValue)
+                            {
+                                if (Model.Emendamento.UIDLettera.HasValue)
+                                {
+                                    <script>
+                                        Articoli_OnChange('@Model.Emendamento.UIDArticolo.Value', '@Model.Emendamento.UIDComma.Value', '@Model.Emendamento.UIDLettera.Value')
+                                    </script>
+                                }
+                                else
+                                {
+                                    <script>
+                                        Articoli_OnChange('@Model.Emendamento.UIDArticolo.Value', '@Model.Emendamento.UIDComma', null)
+                                    </script>
+                                }
+                            }
+                            else
+                            {
+                                <script>
+                                    Articoli_OnChange('@Model.Emendamento.UIDArticolo.Value', null, null)
+                                </script>
+                            }
+                        }
+                    }
+                    <div id="pnlArticoli" style="display: @pnlArticoliVisible">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Emendamento.UIDArticolo)
+                            @Html.DropDownListFor(m => m.Emendamento.UIDArticolo, new SelectList(Model.ListaArticoli, nameof(ArticoliDto.UIDArticolo), nameof(ArticoliDto.Articolo)), "Seleziona articolo", new {@class = "form-control", onchange = "Articoli_OnChange(this.value, null, null)", id = "ArticoliList"})
+                        </div>
+
+                        <div id="pnlCommi" style="display: none">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Emendamento.UIDComma)
+                                @Html.DropDownListFor(m => m.Emendamento.UIDComma, new SelectList(Enumerable.Empty<SelectListItem>()), "Seleziona comma", new {@class = "form-control", onchange = "Commi_OnChange(this.value)", id = "CommiList"})
+                            </div>
+                        </div>
+                        <div id="pnlLettere" style="display: none">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Emendamento.UIDLettera)
+                                @Html.DropDownListFor(m => m.Emendamento.UIDLettera, new SelectList(Enumerable.Empty<SelectListItem>()), "Seleziona lettera", new {@class = "form-control", id = "LettereList"})
+                            </div>
+                        </div>
+                        @{
+                            var pnlLettereOLDVisible = string.IsNullOrEmpty(Model.Emendamento.NLettera) ? "none" : "block";
+                        }
+                        <div id="pnlLettereOLD" style="display: @pnlLettereOLDVisible">
+                            <div class="form-group">
+                                @Html.LabelFor(m => m.Emendamento.NLettera)
+                                @Html.TextBoxFor(m => m.Emendamento.NLettera, new {id = "txtLetteraOLD"})
+                                @*@Html.ValidationMessageFor(m => m.Emendamento.NLettera)*@
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pnlMissioni" style="display: none">
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Emendamento.NMissione)
+                            @Html.DropDownListFor(m => m.Emendamento.NMissione, new SelectList(Model.ListaMissioni, nameof(MissioniDto.NMissione), nameof(MissioniDto.Display)), "Seleziona elemento", new {@class = "form-control", id = "MissioniList"})
+                        </div>
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Emendamento.NProgramma)
+                            @Html.TextBoxFor(m => m.Emendamento.NProgramma, new {type = "number"})
+                        </div>
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Emendamento.NTitoloB)
+                            @Html.DropDownListFor(m => m.Emendamento.NTitoloB, new SelectList(Model.ListaTitoli_Missioni, nameof(TitoloMissioniDto.NTitoloB), nameof(TitoloMissioniDto.Descrizione)), "Seleziona elemento", new {@class = "form-control", id = "TitoliMissioniList"})
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="form-group">
+    @Html.LabelFor(s => s.Emendamento.IDTipo_EM)
+    <div class="row">
+        <div class="col s12">
+            @foreach (var tipoDto in Model.ListaTipiEmendamento)
+            {
+                <label class="black-text" style="margin-left: 20px">
+                    @Html.RadioButtonFor(m => m.Emendamento.IDTipo_EM, tipoDto.IDTipo_EM, new {onchange = "TipoEmendamento_OnChange(this)"})
+                    <span>@tipoDto.Tipo_EM</span>
+                </label>
+            }
+        </div>
+    </div>
+</div>

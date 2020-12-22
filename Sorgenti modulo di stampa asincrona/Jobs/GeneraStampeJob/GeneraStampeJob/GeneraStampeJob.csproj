@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Quartz" Version="3.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ExpressionBuilder">
+      <HintPath>..\..\..\PortaleRegione.Gateway\bin\Release\ExpressionBuilder.dll</HintPath>
+    </Reference>
+    <Reference Include="PortaleRegione.DTO">
+      <HintPath>..\..\..\PortaleRegione.Gateway\bin\Release\PortaleRegione.DTO.dll</HintPath>
+    </Reference>
+    <Reference Include="PortaleRegione.Gateway">
+      <HintPath>..\..\..\PortaleRegione.Gateway\bin\Release\PortaleRegione.Gateway.dll</HintPath>
+    </Reference>
+    <Reference Include="PortaleRegione.GestioneStampe">
+      <HintPath>..\..\..\PortaleRegione.GestioneStampe\PortaleRegione.GestioneStampe\bin\Release\PortaleRegione.GestioneStampe.dll</HintPath>
+    </Reference>
+    <Reference Include="PortaleRegione.Logger">
+      <HintPath>..\..\..\PortaleRegione.Logger\bin\Release\PortaleRegione.Logger.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

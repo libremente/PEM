@@ -1,0 +1,63 @@
+﻿@model PortaleRegione.DTO.Response.BaseResponse<PortaleRegione.DTO.Domain.PersonaDto>
+
+@{
+    ViewBag.Title = "Amministrazione";
+}
+
+<div class="row">
+    <div class="col s12">
+        <h5>
+            <b>@ViewBag.Title</b>
+        </h5>
+    </div>
+</div>
+
+@{
+    Html.RenderPartial("_PaginationBar", Model.Paging);
+}
+
+<div id="utentiTable" class="row">
+
+    @if (!Model.Results.Any())
+    {
+        <div class="row">
+            <div class="col s12">
+                <div class="card-panel panel-warning center">
+                    <span class="center">
+                        Non ci sono sedute al momento
+                    </span>
+                </div>
+            </div>
+        </div>
+    }
+
+    @foreach (var persona in Model.Results)
+    {
+        <div class="col l4 m6 s12">
+            <div class="card hoverable">
+                <div class="card-content" onclick="go('@Url.Action("ViewUtente", "AdminPanel", new {id = persona.id_persona})')">
+                    <h5 class="card-title">
+                        <span>@persona.DisplayName</span>
+                    </h5>
+                    <p>
+                        @persona.userAD
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div id="slide-out-DX" class="sidenav">
+    <ul style="margin: 0">
+        <li>
+            <a class="subheader">Ricerca</a>
+        </li>
+    </ul>
+</div>
+
+<script>
+    $(document).ready(function () {
+        Reset_ClientMode();
+    });
+</script>

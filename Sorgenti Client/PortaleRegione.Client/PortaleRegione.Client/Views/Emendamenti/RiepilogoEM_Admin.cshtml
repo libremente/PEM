@@ -1,0 +1,485 @@
+﻿@using PortaleRegione.DTO.Enum
+@using PortaleRegione.DTO.Model
+@model PortaleRegione.Client.Models.EmendamentiViewModel
+
+@{
+    ViewBag.Title = string.Format("{0} {1}", Model.Atto.TIPI_ATTO.Tipo_Atto, Model.Atto.NAtto);
+
+    var view = HttpUtility.ParseQueryString(Request.Url.Query).Get("view");
+
+    if (string.IsNullOrEmpty(view))
+    {
+        view = "grid";
+    }
+}
+
+<div class="row">
+    <div class="col l1 s2">
+        <a class="btn-floating waves-effect waves-light grey header-back" href="@Url.Action("RiepilogoAtti", "Atti", new {id = Model.Atto.UIDSeduta})">
+            <i class="material-icons">arrow_back</i>
+        </a>
+    </div>
+    <div class="col l6 s5">
+        <h5>
+            <b>@ViewBag.Title</b>
+        </h5>
+    </div>
+</div>
+
+
+<div id="emendamentiTable" class="row">
+    @{
+        var classActiveTabPresentazione = "";
+        var classActiveTabVotazione = "";
+
+        var ordineFromCache = HttpContext.Current.Cache.Get("OrdinamentoEM");
+
+        var ordinePagina = HttpUtility.ParseQueryString(Request.Url.Query).Get("ordine");
+        OrdinamentoEnum ordinePaginaEnum;
+        if (!string.IsNullOrEmpty(ordinePagina))
+        {
+            ordinePaginaEnum = (OrdinamentoEnum) Convert.ToInt16(ordinePagina);
+        }
+        else if (ordineFromCache != null)
+        {
+            ordinePaginaEnum = (OrdinamentoEnum) ordineFromCache;
+        }
+        else
+        {
+            ordinePaginaEnum = OrdinamentoEnum.Presentazione;
+        }
+
+        switch (ordinePaginaEnum)
+        {
+            case OrdinamentoEnum.Presentazione:
+            case OrdinamentoEnum.Default:
+                classActiveTabPresentazione = "active";
+                break;
+            case OrdinamentoEnum.Votazione:
+                classActiveTabVotazione = "active";
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+
+        <ul id="RiepilogoEmendamentiTabs" class="tabs tabs-fixed-width">
+            <li class="tab col s3">
+                <a class="@classActiveTabPresentazione" onclick="go('@Url.Action("RiepilogoEmendamenti", "Emendamenti", new {ordine = (int) OrdinamentoEnum.Presentazione})')">Ordine Presentazione</a>
+            </li>
+            <li class="tab col s3">
+                <a class="@classActiveTabVotazione" onclick="go('@Url.Action("RiepilogoEmendamenti", "Emendamenti", new {ordine = (int) OrdinamentoEnum.Votazione})')">Ordine Votazione</a>
+            </li>
+        </ul>
+
+        Html.RenderPartial("_PaginationBar", Model.Data.Paging);
+        Html.RenderPartial("_Command_RiepilogoEM", new CommandRiepilogoEMModel {view = view, IsAdmin = true});
+
+        if (view == "grid")
+        {
+            Html.RenderPartial("_GridView_Admin_RiepilogoEM", Model);
+        }
+        if (view == "zoom")
+        {
+            Html.RenderPartial("_ZoomView_RiepilogoEM", Model);
+        }
+
+        Html.RenderPartial("_ComandiMassiviAdmin");
+        if (ordinePaginaEnum == OrdinamentoEnum.Votazione)
+        {
+            Html.RenderPartial("_ComandiMassiviOrdinamentoAdmin", Model.Atto.UIDAtto);
+        }
+    }
+</div>
+
+@{
+    Html.RenderPartial("_PannelloStrumentiRicerche");
+}
+
+<div id="modalStampa" class="modal">
+    <div class="modal-content">
+        <h5 id="emStampaDisplayName"></h5>
+        <p>Stai per generare la stampa degli emendamenti selezionati. Sei sicuro?</p>
+        @using (Html.BeginForm("NuovaStampa", "Stampe", FormMethod.Post, new {id = "formStampa"}))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.Atto.UIDAtto)
+            <input id="hdOrdine" name="Ordine" type="hidden" value="@((int) OrdinamentoEnum.Presentazione)"/>
+            <div class="form-group">
+                <label>Dall' emendamento in posizione:</label>
+                <input id="txtDa" name="Da" type="number" class="form-control" value="1" min="1"/>
+            </div>
+            <div class="form-group">
+                <label>All' emendamento in posizione:</label>
+                <input id="txtA" name="A" type="number" class="form-control"/>
+            </div>
+        }
+        <div class="modal-footer">
+            <button type="button" class="btn modal-close grey">Annulla</button>
+            <a id="btnConfermaStampa" class="btn blue">Genera stampa</a>
+        </div>
+    </div>
+</div>
+
+<div id="modalEmendamentiUguali" class="modal">
+    <div class="modal-content">
+        <h5 id="emUgualiDisplayName"></h5>
+        @using (Html.BeginForm("RaggruppaEmendamenti", "Emendamenti", FormMethod.Post, new {id = "formRaggruppa"}))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label>Seleziona colore:</label>
+                <input id="txtColore" name="Colore" class="form-control"/>
+            </div>
+        }
+        <div class="modal-footer">
+            <button type="button" class="btn modal-close grey">Annulla</button>
+            <a id="btnConfermaUguali" class="btn blue">Colora</a>
+        </div>
+    </div>
+</div>
+
+<div id="modalEmendamentiAssegnaA" class="modal">
+    <div class="modal-content">
+        <h5 id="emProponenteDisplayName"></h5>
+        @using (Html.BeginForm("AssegnaNuovoPorponente", "Emendamenti", FormMethod.Post, new {id = "formAssegnaA"}))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label>Seleziona proponente:</label>
+                <div id="autocompleteProponenti" class="chips chips-autocomplete"></div>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input id="chkAssegnaComeAssessore" type="checkbox" name="AssegnaComeAssessore"/>
+                    <span>Assegna come assessore</span>
+                </label>
+            </div>
+        }
+        <div class="modal-footer">
+            <button type="button" class="btn modal-close grey">Annulla</button>
+            <a id="btnConfermaNuovoProponente" class="btn blue">Conferma</a>
+        </div>
+    </div>
+</div>
+
+<div id="modalEmendamentiNotificaA" class="modal">
+    <div class="modal-content">
+        <h5 id="emProponenteDisplayName"></h5>
+        @using (Html.BeginForm("NotificaEmendamento", "Emendamenti", FormMethod.Post, new {id = "formNotificaA"}))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label>Seleziona proponente:</label>
+                <div id="autocompleteInvitati" class="chips chips-autocomplete"></div>
+            </div>
+        }
+        <div class="modal-footer">
+            <button type="button" class="btn modal-close grey">Annulla</button>
+            <a id="btnConfermaNuovoProponente" class="btn blue">Conferma</a>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <script>
+        $(document).ready(function() {
+            checkSelectedEM();
+        });
+
+        $('#btnCreaEM').attr('href', '@Url.Action("NuovoEmendamento", new {id = Model.Atto.UIDAtto})');
+
+        function UgualiA() {
+            $("#emUgualiDisplayName").empty();
+
+            var documentiTotali = $("#hdTotaleDocumenti").val();
+            var selezionaTutti = getSelezionaTutti();
+            var listaEM = getListaEmendamenti();
+            var totaleDoc = selezionaTutti ? documentiTotali - listaEM.length : listaEM.length;
+
+            $("#txtColore").hexColorPicker();
+
+            $("#emUgualiDisplayName").append("CAMBIA COLORE AGLI EMENDAMENTI (TOTALE: " + totaleDoc + ")");
+
+            $("#modalEmendamentiUguali").modal("open");
+            $("#btnConfermaUguali").on("click",
+                function() {
+                    $("#formRaggruppa").submit();
+                });
+        }
+
+        $("#formRaggruppa").submit(function(e) {
+            e.preventDefault();
+        }).validate({
+            submitHandler: function(form) {
+                var listaEM = getListaEmendamenti();
+                var obj = {};
+                obj.Colore = $("#txtColore").val();
+                obj.ListaEmendamenti = listaEM;
+
+                //submit via ajax
+                $.ajax({
+                    url: baseUrl + "/emendamenti/raggruppa",
+                    type: "POST",
+                    data: JSON.stringify(obj),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"
+                }).done(function(data) {
+                    console.log("success", data);
+                    if (data.message)
+                        ErrorAlert(data.message);
+                    else
+                        go(data);
+                }).fail(function(err) {
+                    console.log("error", err);
+                    ErrorAlert(err.message);
+                });
+
+                return false; //This doesn't prevent the form from submitting.
+            }
+        });
+
+        var chipInstanceAssegnaA = null;
+
+        async function AssegnaA() {
+            var personeInDB = await GetPersoneFromDB();
+            var persone = [];
+            $.each(personeInDB,
+                function(index, item) {
+                    persone.push({
+                        tag: item.DisplayName,
+                        id: item.UID_persona
+                    });
+                });
+            var elems = document.querySelector("#autocompleteProponenti");
+            var autocompleteDataOptions = {
+                data: persone,
+                limit: 10,
+                minLength: 1
+            };
+            if (chipInstanceAssegnaA != null) {
+                chipInstanceAssegnaA.destroy();
+            }
+            chipInstanceAssegnaA = M.Chips.init(elems,
+                {
+                    autocompleteOptions: autocompleteDataOptions,
+                    data: [],
+                    onChipAdd: function(e, chip) {
+                        console.log("ADD", e[0].M_Chips.chipsData);
+                    },
+                    onChipSelect: function(e, chip) {
+                        console.log("SELECT", chip);
+                    },
+                    onChipDelete: function(e, chip) {
+                        console.log("DELETE", chip);
+                    }
+                });
+
+            $("#modalEmendamentiAssegnaA").modal("open");
+
+            $("#btnConfermaNuovoProponente").on("click",
+                function() {
+                    $("#formAssegnaA").submit();
+                });
+        }
+
+        $("#formAssegnaA").submit(function(e) {
+            e.preventDefault();
+        }).validate({
+            submitHandler: function(form) {
+                var listaEM = getListaEmendamenti();
+
+                var proponenti = chipInstanceAssegnaA.getData();
+                if (proponenti.length > 1) {
+                    //ERROR
+                    ErrorAlert("E' concesso selezionare solo un proponente");
+                    return null;
+                }
+
+                var obj = {};
+                obj.NuovoProponente = proponenti[0].id;
+                obj.IsAssessore = $("#chkAssegnaComeAssessore").checked;
+                obj.ListaEmendamenti = listaEM;
+
+                //submit via ajax
+                $.ajax({
+                    url: baseUrl + "/emendamenti/assegna-nuovo-proponente",
+                    type: "POST",
+                    data: JSON.stringify(obj),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"
+                }).done(function(data) {
+                    console.log("success", data);
+                    if (data.message)
+                        ErrorAlert(data.message);
+                    else
+                        go(data);
+                }).fail(function(err) {
+                    console.log("error", err);
+                    ErrorAlert(err.message);
+                });
+
+                return false; //This doesn't prevent the form from submitting.
+            }
+        });
+
+        var chipInstanceNotificaA = null;
+
+        async function NotificaA() {
+            var personeInDB = await GetPersoneFromDB();
+            var persone = [];
+            $.each(personeInDB,
+                function(index, item) {
+                    persone.push({
+                        tag: item.DisplayName,
+                        id: item.UID_persona
+                    });
+                });
+            var elems = document.querySelector("#autocompleteInvitati");
+            var autocompleteDataOptions = {
+                data: persone,
+                limit: 10,
+                minLength: 1
+            };
+            if (chipInstanceNotificaA != null) {
+                chipInstanceNotificaA.destroy();
+            }
+            chipInstanceNotificaA = M.Chips.init(elems,
+                {
+                    autocompleteOptions: autocompleteDataOptions,
+                    data: [],
+                    onChipAdd: function(e, chip) {
+                        console.log("ADD", e[0].M_Chips.chipsData);
+                    },
+                    onChipSelect: function(e, chip) {
+                        console.log("SELECT", chip);
+                    },
+                    onChipDelete: function(e, chip) {
+                        console.log("DELETE", chip);
+                    }
+                });
+
+            $("#modalEmendamentiNotificaA").modal("open");
+
+            $("#btnConfermaNotificaA").on("click",
+                function() {
+                    $("#formNotificaA").submit();
+                });
+        }
+
+        $("#formNotificaA").submit(function(e) {
+            e.preventDefault();
+        }).validate({
+            submitHandler: function(form) {
+                var listaEM = getListaEmendamenti();
+
+                var destinatari = chipInstanceNotificaA.getData();
+
+                var obj = {};
+                obj.Pin = value;
+                obj.Azione = 5;
+                obj.ListaEmendamenti = listaEM;
+                obj.ListaDestinatari = destinatari;
+
+                $.ajax({
+                    url: baseUrl + "/emendamenti/azioni-massive",
+                    type: "POST",
+                    data: JSON.stringify(obj),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"
+                }).done(function(data) {
+                    if (data.message) {
+                        ErrorAlert(data.message);
+                    } else {
+                        go(data);
+                    }
+                }).fail(function(err) {
+                    console.log("error", err);
+                    ErrorAlert(err.message);
+                });
+
+                return false; //This doesn't prevent the form from submitting.
+            }
+        });
+
+        function ConfirmStampa() {
+            $("#emStampaDisplayName").empty();
+
+            var documentiTotali = $("#hdTotaleDocumenti").val();
+            var selezionaTutti = getSelezionaTutti();
+            var listaEM = getListaEmendamenti();
+            var totaleDoc = selezionaTutti ? documentiTotali - listaEM.length : listaEM.length;
+
+            if (totaleDoc <= 0) {
+                ErrorAlert("Seleziona almeno un emendamento da stampare");
+                return;
+            }
+
+            $("#txtA").val(totaleDoc);
+            $("#txtA").prop("max", totaleDoc);
+
+            $("#emStampaDisplayName").append("GENERA FASCICOLO EMENDAMENTI (TOTALE EM DA ESPORTARE: " + totaleDoc + ")");
+
+            $("#modalStampa").modal("open");
+            $("#btnConfermaStampa").on("click",
+                function() {
+                    $("#formStampa").submit();
+                });
+        }
+
+        $("#formStampa").submit(function(e) {
+            e.preventDefault();
+        }).validate({
+            submitHandler: function(form) {
+                var obj = {};
+
+                obj.param = {
+                    UIDAtto: $("#Atto_UIDAtto").val(),
+                    Da: $("#txtDa").val(),
+                    A: $("#txtA").val(),
+                    Ordine: $("#hdOrdine").val()
+                };
+                var lstEM = getListaEmendamenti();
+                if (lstEM.length > 0) {
+                    obj.filtro = [];
+                    var selezionaTutti = getSelezionaTutti();
+                    for (var i = 0; i < lstEM.length; i++) {
+                        obj.filtro.push({
+                            PropertyId: "UIDEM",
+                            Operation: selezionaTutti ? 5 : 1,
+                            Value: lstEM[i],
+                            Connector: 1
+                        });
+                    }
+                }
+
+                //submit via ajax
+                $.ajax({
+                    url: baseUrl + "/stampe/nuova",
+                    type: "POST",
+                    data: JSON.stringify(obj),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"
+                }).done(function(data) {
+                    console.log("success", data);
+                    if (data.message)
+                        ErrorAlert(data.message);
+                    else
+                        SuccessAlert("Vai alla gestione stampe per controllare se la tua stampa è pronta", data);
+
+                    setListaEmendamenti([]);
+                    setSelezionaTutti(false);
+                }).fail(function(err) {
+                    console.log("error", err);
+                    ErrorAlert(err.message);
+                });
+
+                return false; //This doesn't prevent the form from submitting.
+            }
+        });
+    </script>
+}

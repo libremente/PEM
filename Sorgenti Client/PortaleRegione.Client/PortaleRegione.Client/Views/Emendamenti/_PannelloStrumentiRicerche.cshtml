@@ -1,0 +1,24 @@
+﻿<div id="slide-out-DX" class="sidenav">
+    <ul class="collapsible">
+        <li>
+            <div class="collapsible-header"><i class="material-icons">search</i>Filtri</div>
+            <div class="collapsible-body">
+                <span>Lorem ipsum dolor sit amet.</span>
+            </div>
+        </li>
+        <li>
+            <div class="collapsible-header"><i class="material-icons">import_export</i>Esporta</div>
+            <div class="collapsible-body">
+                <div class="container">
+                    <div class="chip hoverable green lighten-1 center white-text" onclick="EsportaXLS('@Model.Atto.UIDAtto')" style="width: 100%">
+                        <i class="icon material-icons">grid_on</i> EXCEL
+                    </div>
+
+                    <div class="chip hoverable blue lighten-1 center white-text" onclick="EsportaDOC('@Model.Atto.UIDAtto')" style="width: 100%">
+                        <i class="icon material-icons">font_download</i> WORD
+                    </div>
+                </div>
+            </div>
+        </li>
+    </ul>
+</div>

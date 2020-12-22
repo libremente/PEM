@@ -3,3 +3,46 @@
 ################################################################################
 
 *.suo
+*.dll
+*.pdb
+/Sorgenti API/ExpressionBuilder/bin/Release
+/Sorgenti API/ExpressionBuilder/obj
+*.nupkg
+*.config
+/Sorgenti API/PortaleRegione.API/.vs/PortaleRegione.API/v16/TestStore/0
+/Sorgenti API/PortaleRegione.API/packages
+/Sorgenti API/PortaleRegione.API/PortaleRegione.API/bin
+/Sorgenti API/PortaleRegione.API/PortaleRegione.API/obj/Debug
+/Sorgenti API/PortaleRegione.API/PortaleRegione.API/Properties/PublishProfiles
+/Sorgenti API/PortaleRegione.API/Pubblicazione/bin/roslyn
+/Sorgenti API/PortaleRegione.API/Pubblicazione
+/Sorgenti API/PortaleRegione.BAL/bin
+/Sorgenti API/PortaleRegione.BAL/obj
+/Sorgenti API/PortaleRegione.Common/bin
+/Sorgenti API/PortaleRegione.Common/obj
+/Sorgenti API/PortaleRegione.Contracts/bin
+/Sorgenti API/PortaleRegione.Contracts/obj
+/Sorgenti API/PortaleRegione.DataBase/bin
+/Sorgenti API/PortaleRegione.DataBase/obj
+/Sorgenti API/PortaleRegione.Domain/obj
+/Sorgenti API/PortaleRegione.DTO/bin
+/Sorgenti API/PortaleRegione.DTO/obj
+/Sorgenti API/PortaleRegione.Logger/bin
+/Sorgenti API/PortaleRegione.Logger/obj
+/Sorgenti API/PortaleRegione.Persistance/bin
+/Sorgenti API/PortaleRegione.Persistance/obj
+/Sorgenti Client/PortaleRegione.Client/packages
+/Sorgenti Client/PortaleRegione.Client/PortaleRegione.Client/bin
+/Sorgenti Client/PortaleRegione.Client/PortaleRegione.Client/obj/Debug
+/Sorgenti Client/PortaleRegione.Client/Pubblicazione
+/Sorgenti Client/PortaleRegione.Gateway/bin
+/Sorgenti Client/PortaleRegione.Gateway/obj
+/Sorgenti modulo di stampa asincrona/Jobs/GeneraStampeJob/.vs/GeneraStampeJob/DesignTimeBuild
+/Sorgenti modulo di stampa asincrona/Jobs/GeneraStampeJob/GeneraStampeJob/bin/Release/netstandard2.0
+/Sorgenti modulo di stampa asincrona/Jobs/GeneraStampeJob/GeneraStampeJob/obj
+/Sorgenti modulo di stampa asincrona/Jobs/GeneraStampeJob/GeneraStampeJob/Properties/PublishProfiles
+/Sorgenti modulo di stampa asincrona/Jobs/GeneraStampeJob/packages
+/Sorgenti modulo di stampa asincrona/PortaleRegione.GestioneStampe/packages
+/Sorgenti modulo di stampa asincrona/PortaleRegione.GestioneStampe/PortaleRegione.GestioneStampe/bin
+/Sorgenti modulo di stampa asincrona/PortaleRegione.GestioneStampe/PortaleRegione.GestioneStampe/obj
+/Sorgenti Client/PortaleRegione.Client/PortaleRegione.Client/Properties/PublishProfiles

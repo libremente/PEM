@@ -1,0 +1,62 @@
+﻿@model PortaleRegione.DTO.Model.CommandRiepilogoEMModel
+@{
+    var port = "";
+    if (Request.Url.Port > 0)
+    {
+        port = string.Format(":{0}", Request.Url.Port);
+    }
+
+    var url = string.Format("{0}://{1}{2}{3}", Request.Url.Scheme, Request.Url.Host, port, Request.Url.AbsolutePath);
+    if (Model.view == "zoom")
+    {
+        url += "?view=grid";
+    }
+    else if (Model.view == "grid")
+    {
+        url += "?view=zoom";
+    }
+    var mode = HttpUtility.ParseQueryString(Request.Url.Query).Get("mode");
+    if (string.IsNullOrEmpty(mode))
+    {
+        mode = "1";
+    }
+
+    if (!string.IsNullOrEmpty(mode))
+    {
+        url += string.Format("&mode={0}", mode);
+    }
+}
+<div class="row">
+    <div class="col s6 left">
+        <label>
+            <input type="checkbox" id="checkAll"/>
+            <span for="checkAll">Seleziona tutti</span>
+        </label>
+    </div>
+    <div class="col s6">
+        <div class="right">
+            <label>Cambia vista</label>
+            @if (Model.view == "zoom")
+            {
+                <a href='@url'>
+                    <i class="icon material-icons" title="Visualizza EM in griglia">developer_board</i>
+                </a>
+            }
+            @if (Model.view == "grid")
+            {
+                <a href='@url'>
+                    <i class="icon material-icons" title="Visualizza EM in preview">desktop_windows</i>
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#checkAll").click(function() {
+        setSelezionaTutti(this.checked);
+        setListaEmendamenti([]);
+        $('input[id^="chk_EM_"]').not(this).prop('checked', this.checked);
+        AbilitaComandiMassivi(null);
+    });
+</script>
