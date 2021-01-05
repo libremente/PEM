@@ -2418,6 +2418,56 @@ namespace PortaleRegione.Gateway
 
         #endregion
 
+        #region GetRuoliAD
+
+        public static async Task<IEnumerable<RuoliDto>> GetRuoliAD()
+        {
+            try
+            {
+                var requestUrl = $"{apiUrl}/admin/ad/ruoli";
+                var lst = JsonConvert.DeserializeObject<IEnumerable<RuoliDto>>(await Get(requestUrl));
+
+                return lst;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Log.Error("GetRuoliAD", ex);
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("GetRuoliAD", ex);
+                throw ex;
+            }
+        }
+
+        #endregion
+        
+        #region GetGruppiPoliticiAD
+
+        public static async Task<IEnumerable<GruppoAD_Dto>> GetGruppiPoliticiAD()
+        {
+            try
+            {
+                var requestUrl = $"{apiUrl}/admin/ad/gruppi-politici";
+                var lst = JsonConvert.DeserializeObject<IEnumerable<GruppoAD_Dto>>(await Get(requestUrl));
+
+                return lst;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Log.Error("GetGruppiPoliticiAD", ex);
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("GetGruppiPoliticiAD", ex);
+                throw ex;
+            }
+        }
+
+        #endregion
+
         #endregion
     }
 }

@@ -33,11 +33,7 @@ namespace PortaleRegione.API.Controllers
     {
         private readonly EsportaLogic _logicEsporta;
 
-        /// <summary>
-        ///     ctor
-        /// </summary>
-        /// <param name="logicEsporta"></param>
-        public EsportaController(EsportaLogic logicEsporta)
+        public EsportaController(PersoneLogic logicPersone, EsportaLogic logicEsporta) : base(logicPersone)
         {
             _logicEsporta = logicEsporta;
         }
@@ -55,7 +51,7 @@ namespace PortaleRegione.API.Controllers
             try
             {
                 var response =
-                    ResponseMessage(await _logicEsporta.EsportaGrigliaExcel(id, ordine, currentUser.Persona));
+                    ResponseMessage(await _logicEsporta.EsportaGrigliaExcel(id, ordine, SessionManager.Persona));
 
                 return response;
             }
@@ -78,7 +74,8 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var response = ResponseMessage(await _logicEsporta.EsportaGrigliaWord(id, ordine, currentUser.Persona));
+                var response =
+                    ResponseMessage(await _logicEsporta.EsportaGrigliaWord(id, ordine, SessionManager.Persona));
 
                 return response;
             }

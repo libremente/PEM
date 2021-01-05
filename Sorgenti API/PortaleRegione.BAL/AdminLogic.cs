@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Principal;
+using System.Threading.Tasks;
 using AutoMapper;
 using ExpressionBuilder.Generics;
 using PortaleRegione.Contracts;
@@ -124,12 +125,21 @@ namespace PortaleRegione.BAL
         public PersonaDto GetPersona(PersonaDto persona, List<string> gruppi_utente)
         {
             var ruoli_utente = _unitOfWork.Ruoli.RuoliUtente(gruppi_utente).ToList();
-            persona.Ruoli = ruoli_utente.Select(Mapper.Map<RUOLI, RuoliDto>);
-            persona.CurrentRole = (RuoliIntEnum) ruoli_utente[0].IDruolo;
-            persona.Gruppo = _unitOfWork.Gruppi.GetGruppoPersona(gruppi_utente, persona.IsGiunta());
+            if (ruoli_utente.Any())
+            {
+                persona.Ruoli = ruoli_utente.Select(Mapper.Map<RUOLI, RuoliDto>);
+                persona.CurrentRole = (RuoliIntEnum) ruoli_utente[0].IDruolo;
+            }
+            else
+            {
+                persona.CurrentRole = RuoliIntEnum.Utente;
+            }
 
             if (gruppi_utente.Any())
+            {
+                persona.Gruppo = _unitOfWork.Gruppi.GetGruppoPersona(gruppi_utente, persona.IsGiunta());
                 persona.Gruppi = gruppi_utente.Aggregate((i, j) => i + "; " + j);
+            }
 
             var gruppiUtente_AD = GetADGroups(persona.userAD.Replace(@"CONSIGLIO\", ""));
             if (gruppiUtente_AD.Any())
@@ -182,5 +192,30 @@ namespace PortaleRegione.BAL
         }
 
         #endregion
+
+        #region GetRuoliAD
+
+        public async Task<IEnumerable<RuoliDto>> GetRuoliAD(bool SoloRuoliGiunta)
+        {
+            var listaRuoli = await _unitOfWork.Ruoli.GetAll(SoloRuoliGiunta);
+            return listaRuoli.Select(Mapper.Map<RUOLI, RuoliDto>);
+        }
+
+        #endregion
+        
+        #region GetGruppiPoliticiAD
+
+        public async Task<IEnumerable<GruppoAD_Dto>> GetGruppiPoliticiAD(bool SoloRuoliGiunta)
+        {
+            var listaGruppiAD = await _unitOfWork
+                .Gruppi
+                .GetGruppiPoliticiAD(
+                    _unitOfWork.Legislature.Legislatura_Attiva(),
+                    SoloRuoliGiunta);
+            return listaGruppiAD.Select(Mapper.Map<JOIN_GRUPPO_AD, GruppoAD_Dto>);
+        }
+
+        #endregion
+
     }
 }

@@ -103,6 +103,10 @@ namespace PortaleRegione.API
             Mapper.CreateMap<View_PINS, PinDto>().ForAllMembers(opt => opt.Condition(srs => !srs.IsSourceValueNull));
             Mapper.CreateMap<PinDto, View_PINS>().ForAllMembers(opt => opt.Condition(srs => !srs.IsSourceValueNull));
 
+            Mapper.CreateMap<JOIN_GRUPPO_AD, GruppoAD_Dto>()
+                .ForAllMembers(opt => opt.Condition(srs => !srs.IsSourceValueNull));
+            Mapper.CreateMap<GruppoAD_Dto, JOIN_GRUPPO_AD>()
+                .ForAllMembers(opt => opt.Condition(srs => !srs.IsSourceValueNull));
             #endregion
 
             #region EMENDAMENTI

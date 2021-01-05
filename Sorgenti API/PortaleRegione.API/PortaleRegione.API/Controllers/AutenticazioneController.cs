@@ -48,19 +48,7 @@ namespace PortaleRegione.API.Controllers
     [AllowAnonymous]
     public class AutenticazioneController : BaseApiController
     {
-        private readonly PersoneLogic _logicPersona;
         private readonly IUnitOfWork _unitOfWork;
-
-        /// <summary>
-        ///     ctor
-        /// </summary>
-        /// <param name="unitOfWork"></param>
-        /// <param name="logicPersona"></param>
-        public AutenticazioneController(IUnitOfWork unitOfWork, PersoneLogic logicPersona)
-        {
-            _unitOfWork = unitOfWork;
-            _logicPersona = logicPersona;
-        }
 
         /// <summary>
         ///     Endpoint di login
@@ -140,7 +128,7 @@ namespace PortaleRegione.API.Controllers
                 foreach (var group in Gruppi_Utente)
                     lRuoli.Add($"CONSIGLIO\\{group}");
 
-                personaDto.Carica = _logicPersona.GetCaricaPersona(personaDto.UID_persona);
+                personaDto.Carica = _logicPersone.GetCaricaPersona(personaDto.UID_persona);
 
                 var token = GetToken(personaDto, lRuoli);
 
@@ -175,7 +163,7 @@ namespace PortaleRegione.API.Controllers
 
                 var intranetAdService = new proxyAD();
                 var Gruppi_Utente = new List<string>(intranetAdService.GetGroups(
-                    currentUser.Persona.userAD.Replace(@"CONSIGLIO\", ""), "PEM_", AppSettingsConfiguration.TOKEN_R));
+                    SessionManager.Persona.userAD.Replace(@"CONSIGLIO\", ""), "PEM_", AppSettingsConfiguration.TOKEN_R));
 
                 var lRuoli = Gruppi_Utente.Select(group => $"CONSIGLIO\\{group}").ToList();
 
@@ -185,10 +173,10 @@ namespace PortaleRegione.API.Controllers
                 if (ruoloAccessibile == null)
                     return BadRequest("Ruolo non accessibile");
 
-                var persona = currentUser.Persona;
+                var persona = SessionManager.Persona;
                 persona.CurrentRole = ruolo;
                 persona.Gruppo = _unitOfWork.Gruppi.GetGruppoPersona(lRuoli, persona.IsGiunta());
-                persona.Carica = _logicPersona.GetCaricaPersona(persona.UID_persona);
+                persona.Carica = _logicPersone.GetCaricaPersona(persona.UID_persona);
 
                 var token = GetToken(persona);
 
@@ -222,7 +210,7 @@ namespace PortaleRegione.API.Controllers
                     return BadRequest("ListaGruppo non trovato");
 
                 var gruppoDto = Mapper.Map<gruppi_politici, GruppiDto>(gruppoInDb);
-                var persona = currentUser.Persona;
+                var persona = SessionManager.Persona;
                 persona.Gruppo = gruppoDto;
                 persona.CurrentRole = RuoliIntEnum.Responsabile_Segreteria_Politica;
                 var token = GetToken(persona);
@@ -328,5 +316,10 @@ namespace PortaleRegione.API.Controllers
         }
 
         #endregion
+
+        public AutenticazioneController(PersoneLogic logicPersone, IUnitOfWork unitOfWork) : base(logicPersone)
+        {
+            _unitOfWork = unitOfWork;
+        }
     }
 }

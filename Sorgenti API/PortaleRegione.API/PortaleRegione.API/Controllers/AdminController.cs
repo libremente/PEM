@@ -41,11 +41,7 @@ namespace PortaleRegione.API.Controllers
     {
         private readonly AdminLogic _logic;
 
-        /// <summary>
-        ///     ctor
-        /// </summary>
-        /// <param name="logic"></param>
-        public AdminController(AdminLogic logic)
+        public AdminController(PersoneLogic logicPersone, AdminLogic logic) : base(logicPersone)
         {
             _logic = logic;
         }
@@ -122,6 +118,50 @@ namespace PortaleRegione.API.Controllers
             catch (Exception e)
             {
                 Log.Error("GetUtente", e);
+                return ErrorHandler(e);
+            }
+        }
+
+        /// <summary>
+        ///     Endpoint per avere i ruoli AD disponibili
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("ad/ruoli")]
+        public async Task<IHttpActionResult> GetRuoliAD()
+        {
+            try
+            {
+                var currentUser = _logic.GetPersona(SessionManager.Persona.UID_persona);
+                var ruoli = await _logic.GetRuoliAD(currentUser.CurrentRole == RuoliIntEnum.Amministratore_PEM);
+
+                return Ok(ruoli);
+            }
+            catch (Exception e)
+            {
+                Log.Error("GetRuoli", e);
+                return ErrorHandler(e);
+            }
+        }
+
+        /// <summary>
+        ///     Endpoint per avere i gruppi politici AD disponibili
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("ad/gruppi-politici")]
+        public async Task<IHttpActionResult> GetGruppiPoliticiAD()
+        {
+            try
+            {
+                var gruppiPoliticiAD =
+                    await _logic.GetGruppiPoliticiAD(SessionManager.Persona.CurrentRole == RuoliIntEnum.Amministratore_PEM);
+
+                return Ok(gruppiPoliticiAD);
+            }
+            catch (Exception e)
+            {
+                Log.Error("GetGruppiPoliticiAD", e);
                 return ErrorHandler(e);
             }
         }

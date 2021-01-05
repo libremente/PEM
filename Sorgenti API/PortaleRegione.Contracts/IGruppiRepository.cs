@@ -17,6 +17,7 @@
  */
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Domain;
 using PortaleRegione.DTO.Model;
@@ -35,5 +36,8 @@ namespace PortaleRegione.Contracts
         IEnumerable<UTENTI_NoCons> GetSegreteriaPolitica(int id, bool notifica_firma, bool notifica_deposito);
         IEnumerable<View_UTENTI> GetConsiglieriGruppo(int id_legislatura, int id_gruppo);
         View_gruppi_politici_con_giunta GetGruppoAttuale(PersonaDto persona, bool isGiunta);
+
+        Task<IEnumerable<JOIN_GRUPPO_AD>> GetGruppiPoliticiAD(int id_legislatura, bool soloRuoliGiunta);
+
     }
 }

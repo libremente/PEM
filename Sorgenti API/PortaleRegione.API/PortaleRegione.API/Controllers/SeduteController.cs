@@ -39,11 +39,7 @@ namespace PortaleRegione.API.Controllers
     {
         private readonly SeduteLogic _logic;
 
-        /// <summary>
-        ///     Ctor
-        /// </summary>
-        /// <param name="logic"></param>
-        public SeduteController(SeduteLogic logic)
+        public SeduteController(PersoneLogic logicPersone, SeduteLogic logic) : base(logicPersone)
         {
             _logic = logic;
         }
@@ -111,7 +107,7 @@ namespace PortaleRegione.API.Controllers
                 if (sedutaInDb == null)
                     return NotFound();
 
-                await _logic.DeleteSeduta(Mapper.Map<SEDUTE, SeduteDto>(sedutaInDb), currentUser.Persona);
+                await _logic.DeleteSeduta(Mapper.Map<SEDUTE, SeduteDto>(sedutaInDb), SessionManager.Persona);
 
                 return Ok();
             }
@@ -135,7 +131,7 @@ namespace PortaleRegione.API.Controllers
             {
                 var seduta =
                     Mapper.Map<SEDUTE, SeduteDto>(await _logic.NuovaSeduta(Mapper.Map<SeduteDto, SEDUTE>(sedutaDto),
-                        currentUser.Persona));
+                        SessionManager.Persona));
                 return Created(new Uri(Request.RequestUri + "/" + seduta.UIDSeduta), seduta);
             }
             catch (Exception e)
@@ -161,7 +157,7 @@ namespace PortaleRegione.API.Controllers
                 if (sedutaInDb == null)
                     return NotFound();
 
-                await _logic.ModificaSeduta(sedutaDto, currentUser.Persona);
+                await _logic.ModificaSeduta(sedutaDto, SessionManager.Persona);
 
                 return Ok();
             }

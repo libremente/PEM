@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
 using PortaleRegione.Domain;
@@ -159,6 +160,18 @@ namespace PortaleRegione.Persistance
                     $"Select * from View_gruppi_politici_con_giunta where id_gruppo = dbo.get_IDgruppoAttuale_from_persona('{persona.UID_persona}', {(isGiunta ? 1 : 0)})");
 
             return resultViewGruppi.Any() ? resultViewGruppi.First() : null;
+        }
+
+        public async Task<IEnumerable<JOIN_GRUPPO_AD>> GetGruppiPoliticiAD(int id_legislatura, bool soloRuoliGiunta)
+        {
+            var query = PRContext
+                .JOIN_GRUPPO_AD
+                .Where(j => j.id_legislatura == id_legislatura);
+
+            if (soloRuoliGiunta)
+                query = query.Where(j => j.GiuntaRegionale);
+
+            return await query.ToListAsync();
         }
     }
 }

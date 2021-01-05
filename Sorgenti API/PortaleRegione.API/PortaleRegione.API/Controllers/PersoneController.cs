@@ -40,17 +40,11 @@ namespace PortaleRegione.API.Controllers
     [RoutePrefix("persone")]
     public class PersoneController : BaseApiController
     {
-        private readonly PersoneLogic _logicPersone;
         private readonly IUnitOfWork _unitOfWork;
 
-        /// <summary>
-        ///     Costruttore
-        /// </summary>
-        /// <param name="unitOfWork"></param>
-        public PersoneController(IUnitOfWork unitOfWork, PersoneLogic logicPersone)
+        public PersoneController(PersoneLogic logicPersone, IUnitOfWork unitOfWork) : base(logicPersone)
         {
             _unitOfWork = unitOfWork;
-            _logicPersone = logicPersone;
         }
 
         /// <summary>
@@ -237,7 +231,7 @@ namespace PortaleRegione.API.Controllers
                 if (model.conferma_pin != model.nuovo_pin)
                     return BadRequest("Il nuovo PIN non combacia con quello di conferma!!!");
 
-                var currentPin = _logicPersone.GetPin(currentUser.Persona);
+                var currentPin = _logicPersone.GetPin(SessionManager.Persona);
                 if (currentPin == null)
                     return BadRequest("Pin non impostato");
                 if (currentPin.RichiediModificaPIN)
@@ -252,7 +246,7 @@ namespace PortaleRegione.API.Controllers
                 if (model.nuovo_pin.Length != 4)
                     return BadRequest("Il PIN dev'essere un numero di massimo 4 cifre!");
 
-                model.PersonaUId = currentUser.Persona.UID_persona;
+                model.PersonaUId = SessionManager.Persona.UID_persona;
 
                 await _logicPersone.CambioPin(model);
 
@@ -300,7 +294,7 @@ namespace PortaleRegione.API.Controllers
                 var IntranetADService = new proxyAD();
                 ris = IntranetADService
                     .ChangeADUserPass(
-                        currentUser.Persona.userAD.Replace(@"CONSIGLIO\", ""),
+                        SessionManager.Persona.userAD.Replace(@"CONSIGLIO\", ""),
                         string.Empty,
                         nuova,
                         AppSettingsConfiguration.TOKEN_W);
@@ -314,7 +308,7 @@ namespace PortaleRegione.API.Controllers
                 return ErrorHandler(e);
             }
         }
-        
+
         [Authorize(Roles = RuoliEnum.Amministratore_PEM)]
         [HttpPost]
         [Route("reset-pin")]

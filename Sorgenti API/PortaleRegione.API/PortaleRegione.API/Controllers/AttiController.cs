@@ -41,21 +41,12 @@ namespace PortaleRegione.API.Controllers
     public class AttiController : BaseApiController
     {
         private readonly AttiLogic _logic;
-        private readonly PersoneLogic _logicPersone;
         private readonly StampeLogic _logicStampe;
 
-        /// <summary>
-        ///     ctor
-        /// </summary>
-        /// <param name="logic"></param>
-        /// <param name="logicStampe"></param>
-        /// <param name="logicPersone"></param>
-        public AttiController(AttiLogic logic, StampeLogic logicStampe,
-            PersoneLogic logicPersone)
+        public AttiController(PersoneLogic logicPersone, AttiLogic logic, StampeLogic logicStampe) : base(logicPersone)
         {
             _logic = logic;
             _logicStampe = logicStampe;
-            _logicPersone = logicPersone;
         }
 
         /// <summary>
@@ -71,7 +62,7 @@ namespace PortaleRegione.API.Controllers
             {
                 object CLIENT_MODE;
                 model.param.TryGetValue("CLIENT_MODE", out CLIENT_MODE); // per trattazione aula
-                var result = _logic.GetAtti(model, Convert.ToInt16(CLIENT_MODE), currentUser.Persona,
+                var result = _logic.GetAtti(model, Convert.ToInt16(CLIENT_MODE), SessionManager.Persona,
                     Request.RequestUri);
                 return Ok(result);
             }
@@ -158,7 +149,7 @@ namespace PortaleRegione.API.Controllers
                     return BadRequest("Impossibile settare una data di chiusura inferiore alla data di apertura");
 
                 var atto = Mapper.Map<AttiFormUpdateModel, ATTI>(attoModel);
-                var nuovoAtto = await _logic.NuovoAtto(atto, currentUser.Persona);
+                var nuovoAtto = await _logic.NuovoAtto(atto, SessionManager.Persona);
                 return Created(new Uri(Request.RequestUri.ToString()), Mapper.Map<ATTI, AttiDto>(nuovoAtto));
             }
             catch (Exception e)
@@ -188,7 +179,7 @@ namespace PortaleRegione.API.Controllers
                 if (attoModel.Data_chiusura <= attoModel.Data_apertura)
                     return BadRequest("Impossibile settare una data di chiusura inferiore alla data di apertura");
 
-                await _logic.SalvaAtto(attoInDb, attoModel, currentUser.Persona);
+                await _logic.SalvaAtto(attoInDb, attoModel, SessionManager.Persona);
 
                 return Ok(Mapper.Map<ATTI, AttiDto>(attoInDb));
             }
@@ -501,7 +492,7 @@ namespace PortaleRegione.API.Controllers
                 if (attoInDb == null)
                     return NotFound();
 
-                await _logic.PubblicaFascicolo(attoInDb, model, currentUser.Persona);
+                await _logic.PubblicaFascicolo(attoInDb, model, SessionManager.Persona);
 
                 if (model.Abilita)
                     await _logicStampe.InserisciStampa(new BaseRequest<EmendamentiDto, StampaDto>
@@ -513,7 +504,7 @@ namespace PortaleRegione.API.Controllers
                             A = 0,
                             Ordine = (int) model.Ordinamento
                         }
-                    }, currentUser.Persona);
+                    }, SessionManager.Persona);
 
                 return Ok();
             }

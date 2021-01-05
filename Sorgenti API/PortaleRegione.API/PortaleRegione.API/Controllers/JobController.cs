@@ -40,12 +40,8 @@ namespace PortaleRegione.API.Controllers
         private readonly StampeLogic _logic;
         private readonly EmendamentiLogic _logicEm;
 
-        /// <summary>
-        ///     ctor
-        /// </summary>
-        /// <param name="logic"></param>
-        /// <param name="logicEm"></param>
-        public JobController(StampeLogic logic, EmendamentiLogic logicEm)
+        public JobController(PersoneLogic logicPersone, StampeLogic logic, EmendamentiLogic logicEm) : base(
+            logicPersone)
         {
             _logic = logic;
             _logicEm = logicEm;

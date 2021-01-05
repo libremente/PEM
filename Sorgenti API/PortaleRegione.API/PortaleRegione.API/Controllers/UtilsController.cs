@@ -39,11 +39,7 @@ namespace PortaleRegione.API.Controllers
     {
         private readonly UtilsLogic _logic;
 
-        /// <summary>
-        ///     ctor
-        /// </summary>
-        /// <param name="logic"></param>
-        public UtilsController(UtilsLogic logic)
+        public UtilsController(PersoneLogic logicPersone, UtilsLogic logic) : base(logicPersone)
         {
             _logic = logic;
         }

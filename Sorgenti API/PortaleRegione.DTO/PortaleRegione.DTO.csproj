@@ -65,6 +65,7 @@
     <Compile Include="Domain\Essentials\MetaDatiEMDto.cs" />
     <Compile Include="Domain\Essentials\PersonaLightDto.cs" />
     <Compile Include="Domain\FirmeDto.cs" />
+    <Compile Include="Domain\GruppoAD_Dto.cs" />
     <Compile Include="Domain\LegislaturaDto.cs" />
     <Compile Include="Domain\LettereDto.cs" />
     <Compile Include="Domain\MissioniDto.cs" />

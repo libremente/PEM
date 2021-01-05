@@ -17,8 +17,11 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
+using PortaleRegione.Client.Models;
 using PortaleRegione.DTO.Domain;
 using PortaleRegione.DTO.Enum;
 using PortaleRegione.DTO.Response;
@@ -50,7 +53,17 @@ namespace PortaleRegione.Client.Controllers
         [Route("view/{id:guid}")]
         public async Task<ActionResult> ViewUtente(Guid id)
         {
-            return View("ViewUtente", await ApiGateway.GetPersonaAdmin(id));
+            var persona = await ApiGateway.GetPersonaAdmin(id);
+            var ruoli = await ApiGateway.GetRuoliAD();
+            var gruppiAD = await ApiGateway.GetGruppiPoliticiAD();
+            var listaGruppiRuoliAD = ruoli.Select(ruolo => new AD_ObjectModel {GruppoAD = ruolo.ADGroup, Membro = persona.Gruppi.Contains(ruolo.ADGroup.Replace(@"CONSIGLIO\", "")), IsRuolo = true}).ToList();
+            listaGruppiRuoliAD.AddRange(gruppiAD.Select(gruppo => new AD_ObjectModel {GruppoAD = gruppo.GruppoAD, Membro = persona.Gruppi.Contains(gruppo.GruppoAD.Replace(@"CONSIGLIO\", "")), IsRuolo = false}));
+
+            return View("ViewUtente", new ViewUtenteModel
+            {
+                Persona = persona,
+                GruppiAD = listaGruppiRuoliAD
+            });
         }
 
         [HttpPost]

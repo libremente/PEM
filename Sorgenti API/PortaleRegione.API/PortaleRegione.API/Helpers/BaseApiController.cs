@@ -17,25 +17,31 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Data.Entity.Validation;
-using System.Globalization;
 using System.Security.Claims;
 using System.Web.Http;
-using Newtonsoft.Json;
+using PortaleRegione.BAL;
 using PortaleRegione.DTO.Domain;
+using PortaleRegione.DTO.Enum;
 
 namespace PortaleRegione.API.Helpers
 {
     /// <summary>
-    /// Controller di base
+    ///     Controller di base
     /// </summary>
     public class BaseApiController : ApiController
     {
-        public CurrentUser currentUser => GetUser();
+        protected readonly PersoneLogic _logicPersone;
+
+        public BaseApiController(PersoneLogic logicPersone)
+        {
+            _logicPersone = logicPersone;
+        }
+
+        public SessionManager SessionManager => GetSession();
 
         /// <summary>
-        /// Handler per catturare i messaggi di errore
+        ///     Handler per catturare i messaggi di errore
         /// </summary>
         /// <param name="e"></param>
         /// <returns></returns>
@@ -66,43 +72,44 @@ namespace PortaleRegione.API.Helpers
         }
 
         /// <summary>
-        /// Metodo per avere l'utente loggato dal jwt
+        ///     Metodo per avere l'utente loggato dal jwt
         /// </summary>
         /// <returns></returns>
-        private CurrentUser GetUser()
+        private SessionManager GetSession()
         {
             var identity = RequestContext.Principal.Identity as ClaimsIdentity;
-            var roles = new List<string>();
-            PersonaDto personaDto = null;
+            var role = string.Empty;
+            var uid_persona = string.Empty;
             foreach (var identityClaim in identity.Claims)
                 switch (identityClaim.Type)
                 {
                     case ClaimTypes.Role:
-                        roles.Add(identityClaim.Value);
+                        role = identityClaim.Value;
                         break;
-                    case ClaimTypes.UserData:
+                    case ClaimTypes.Name:
                     {
-                        personaDto = JsonConvert.DeserializeObject<PersonaDto>(identityClaim.Value);
+                        uid_persona = identityClaim.Value;
                         break;
                     }
                 }
 
-            var user = new CurrentUser
+            var persona = _logicPersone.GetPersona(new Guid(uid_persona));
+            persona.CurrentRole = (RuoliIntEnum) Convert.ToInt16(role);
+            persona = _logicPersone.GetPersona(persona.UID_persona, persona.IsGiunta());
+            var session = new SessionManager
             {
-                Persona = personaDto,
-                Ruoli = roles
+                Persona = persona
             };
 
-            return user;
+            return session;
         }
     }
 
     /// <summary>
-    /// Classe di mappaggio sessione utente
+    ///     Classe di mappaggio sessione utente
     /// </summary>
-    public class CurrentUser
+    public class SessionManager
     {
         public PersonaDto Persona { get; set; }
-        public List<string> Ruoli { get; set; }
     }
 }

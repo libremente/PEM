@@ -36,11 +36,7 @@ namespace PortaleRegione.API.Controllers
     {
         private readonly StampeLogic _logic;
 
-        /// <summary>
-        ///     ctor
-        /// </summary>
-        /// <param name="logic"></param>
-        public StampeController(StampeLogic logic)
+        public StampeController(PersoneLogic logicPersone, StampeLogic logic) : base(logicPersone)
         {
             _logic = logic;
         }
@@ -56,7 +52,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var result = await _logic.GetStampe(model, currentUser.Persona, Request.RequestUri);
+                var result = await _logic.GetStampe(model, SessionManager.Persona, Request.RequestUri);
                 return Ok(result);
             }
             catch (Exception e)
@@ -76,7 +72,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                await _logic.InserisciStampa(model, currentUser.Persona);
+                await _logic.InserisciStampa(model, SessionManager.Persona);
                 return Ok();
             }
             catch (Exception e)

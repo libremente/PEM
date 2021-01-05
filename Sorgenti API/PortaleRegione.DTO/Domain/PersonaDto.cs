@@ -31,8 +31,7 @@ namespace PortaleRegione.DTO.Domain
         public string GruppiAD;
 
         //Preso in considerazione solo quando richiesto dal pannello amministrativo
-        [Display(Name = "Attivo")]
-        public bool? attivo { get; set; }
+        [Display(Name = "Attivo")] public bool? attivo { get; set; }
 
         public string DisplayName => $"{cognome} {nome}";
 
@@ -42,36 +41,37 @@ namespace PortaleRegione.DTO.Domain
         public string DisplayName_GruppoCode_EX =>
             $"{DisplayName} ({(Gruppo != null ? Gruppo.nome_gruppo : "N.D.")})";
 
-        [Display(Name = "GUID")]
-        public Guid UID_persona { get; set; }
+        [Display(Name = "GUID")] public Guid UID_persona { get; set; }
         public int id_persona { get; set; }
 
-        [Display(Name = "Cognome")]
-        public string cognome { get; set; }
-        [Display(Name = "Nome")]
-        public string nome { get; set; }
-        [Display(Name = "Email")]
-        public string email { get; set; }
-        [Display(Name = "Foto")]
-        public string foto { get; set; }
-        [Display(Name = "Login di rete")]
-        public string userAD { get; set; }
+        [Display(Name = "Cognome")] public string cognome { get; set; }
+        [Display(Name = "Nome")] public string nome { get; set; }
+        [Display(Name = "Email")] public string email { get; set; }
+        [Display(Name = "Foto")] public string foto { get; set; }
+        [Display(Name = "Login di rete")] public string userAD { get; set; }
+
         [Display(Name = "Consigliere/Assessore")]
         public int No_Cons { get; set; }
 
+        [Display(Name = "Notifica alla firma")]
         public bool? notifica_firma { get; set; }
+
+        [Display(Name = "Notifica al deposito")]
         public bool? notifica_deposito { get; set; }
+
+        [Display(Name = "Eliminato")] public bool? deleted { get; set; }
 
         public string Carica { get; set; }
 
         public IEnumerable<RuoliDto> Ruoli { get; set; }
+
         [Display(Name = "Gruppo di riferimento")]
         public GruppiDto Gruppo { get; set; }
+
         public RuoliIntEnum CurrentRole { get; set; }
 
         //Parametro valorizzato solo da pannello amministratore
-        [Display(Name = "Gruppi A.D. PEM")]
-        public string Gruppi { get; set; }
+        [Display(Name = "Gruppi A.D. PEM")] public string Gruppi { get; set; }
 
         //Parametro valorizzato solo da pannello amministratore
         public StatoPinEnum Stato_Pin { get; set; }
@@ -90,13 +90,5 @@ namespace PortaleRegione.DTO.Domain
                     return false;
             }
         }
-    }
-
-    public class PersonaFormDto
-    {
-        public string cognome { get; set; }
-        public string nome { get; set; }
-        public string email { get; set; }
-        public string userAD { get; set; }
     }
 }

@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
 using PortaleRegione.Domain;
@@ -35,6 +36,17 @@ namespace PortaleRegione.Persistance
         }
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
+
+        public async Task<IEnumerable<RUOLI>> GetAll(bool soloRuoliGiunta)
+        {
+            var query = PRContext
+                .RUOLI
+                .Where(r=>true);
+            if (soloRuoliGiunta)
+                query = query.Where(r => r.Ruolo_di_Giunta);
+
+            return await query.ToListAsync();
+        }
 
         public IEnumerable<RUOLI> RuoliUtente(List<string> lstRuoli)
         {

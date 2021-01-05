@@ -38,17 +38,10 @@ namespace PortaleRegione.API.Controllers
     public class NotificheController : BaseApiController
     {
         private readonly NotificheLogic _logic;
-        private readonly PersoneLogic _logicPersone;
 
-        /// <summary>
-        ///     ctor
-        /// </summary>
-        /// <param name="logic"></param>
-        /// <param name="logicPersone"></param>
-        public NotificheController(NotificheLogic logic, PersoneLogic logicPersone)
+        public NotificheController(PersoneLogic logicPersone, NotificheLogic logic) : base(logicPersone)
         {
             _logic = logic;
-            _logicPersone = logicPersone;
         }
 
         /// <summary>
@@ -65,14 +58,14 @@ namespace PortaleRegione.API.Controllers
                 object Archivio;
                 model.param.TryGetValue("Archivio", out Archivio);
 
-                var result = _logic.GetNotificheInviate(model, currentUser.Persona, Convert.ToBoolean(Archivio));
+                var result = _logic.GetNotificheInviate(model, SessionManager.Persona, Convert.ToBoolean(Archivio));
 
                 return Ok(new BaseResponse<NotificaDto>(
                     model.page,
                     model.size,
                     result,
                     model.filtro,
-                    _logic.CountInviate(model, currentUser.Persona, Convert.ToBoolean(Archivio)),
+                    _logic.CountInviate(model, SessionManager.Persona, Convert.ToBoolean(Archivio)),
                     Request.RequestUri));
             }
             catch (Exception e)
@@ -93,7 +86,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                await _logic.NotificaVista(notificaId, currentUser.Persona.UID_persona);
+                await _logic.NotificaVista(notificaId, SessionManager.Persona.UID_persona);
 
                 return Ok();
             }
@@ -118,14 +111,14 @@ namespace PortaleRegione.API.Controllers
                 object Archivio;
                 model.param.TryGetValue("Archivio", out Archivio);
 
-                var result = _logic.GetNotificheRicevute(model, currentUser.Persona, Convert.ToBoolean(Archivio));
+                var result = _logic.GetNotificheRicevute(model, SessionManager.Persona, Convert.ToBoolean(Archivio));
 
                 return Ok(new BaseResponse<NotificaDto>(
                     model.page,
                     model.size,
                     result,
                     model.filtro,
-                    _logic.CountRicevute(model, currentUser.Persona, Convert.ToBoolean(Archivio)),
+                    _logic.CountRicevute(model, SessionManager.Persona, Convert.ToBoolean(Archivio)),
                     Request.RequestUri));
             }
             catch (Exception e)
@@ -167,16 +160,16 @@ namespace PortaleRegione.API.Controllers
             try
             {
                 var invitoDaSegreteria =
-                    currentUser.Persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Politica ||
-                    currentUser.Persona.CurrentRole == RuoliIntEnum.Segreteria_Politica ||
-                    currentUser.Persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Giunta ||
-                    currentUser.Persona.CurrentRole == RuoliIntEnum.Segreteria_Giunta_Regionale ||
-                    currentUser.Persona.CurrentRole == RuoliIntEnum.Amministratore_PEM;
+                    SessionManager.Persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Politica ||
+                    SessionManager.Persona.CurrentRole == RuoliIntEnum.Segreteria_Politica ||
+                    SessionManager.Persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Giunta ||
+                    SessionManager.Persona.CurrentRole == RuoliIntEnum.Segreteria_Giunta_Regionale ||
+                    SessionManager.Persona.CurrentRole == RuoliIntEnum.Amministratore_PEM;
 
                 if (invitoDaSegreteria)
-                    return Ok(await _logic.InvitaAFirmareEmendamento(model, currentUser.Persona));
+                    return Ok(await _logic.InvitaAFirmareEmendamento(model, SessionManager.Persona));
 
-                var pinInDb = _logicPersone.GetPin(currentUser.Persona);
+                var pinInDb = _logicPersone.GetPin(SessionManager.Persona);
                 if (pinInDb == null)
                     return BadRequest("Pin non impostato");
                 if (pinInDb.RichiediModificaPIN)
@@ -184,7 +177,7 @@ namespace PortaleRegione.API.Controllers
                 if (model.Pin != pinInDb.PIN_Decrypt)
                     return BadRequest("Pin inserito non valido");
 
-                return Ok(await _logic.InvitaAFirmareEmendamento(model, currentUser.Persona));
+                return Ok(await _logic.InvitaAFirmareEmendamento(model, SessionManager.Persona));
             }
             catch (Exception e)
             {
@@ -205,7 +198,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                return Ok(_logic.GetListaDestinatari(atto, tipo, currentUser.Persona));
+                return Ok(_logic.GetListaDestinatari(atto, tipo, SessionManager.Persona));
             }
             catch (Exception e)
             {

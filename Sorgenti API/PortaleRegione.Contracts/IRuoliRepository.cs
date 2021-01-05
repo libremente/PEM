@@ -17,6 +17,7 @@
  */
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using PortaleRegione.Domain;
 
 namespace PortaleRegione.Contracts
@@ -26,6 +27,8 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface IRuoliRepository : IRepository<RUOLI>
     {
+        Task<IEnumerable<RUOLI>> GetAll(bool soloRuoliGiunta);
+
         IEnumerable<RUOLI> RuoliUtente(List<string> lstRuoli);
         RUOLI Get(int ruoliId);
     }
