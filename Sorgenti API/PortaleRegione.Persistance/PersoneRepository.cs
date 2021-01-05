@@ -57,7 +57,6 @@ namespace PortaleRegione.Persistance
         {
             var query = PRContext
                 .View_UTENTI
-                .Where(u => u.No_Cons == 0 && u.deleted == false)
                 .Where(u => u.UID_persona != Guid.Empty);
 
             filtro?.BuildExpression(ref query);
@@ -75,7 +74,6 @@ namespace PortaleRegione.Persistance
         {
             var query = PRContext
                 .View_UTENTI
-                .Where(u => u.No_Cons == 0 && u.deleted == false)
                 .Where(u => u.UID_persona != Guid.Empty);
 
             filtro?.BuildExpression(ref query);
@@ -88,7 +86,6 @@ namespace PortaleRegione.Persistance
         {
             var query = PRContext
                 .View_UTENTI
-                .Where(u => u.No_Cons == 0 && u.deleted == false)
                 .Where(u => u.UID_persona != Guid.Empty)
                 .OrderBy(u => u.cognome)
                 .ThenBy(u => u.nome);
