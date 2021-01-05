@@ -78,6 +78,7 @@
     <Compile Include="Enum\CounterEmendamentiEnum.cs" />
     <Compile Include="Enum\FirmeTipoEnum.cs" />
     <Compile Include="Enum\PartiEMEnum.cs" />
+    <Compile Include="Enum\StatoPinEnum.cs" />
     <Compile Include="Enum\TemplateTypeEnum.cs" />
     <Compile Include="Enum\TipoAllegatoEnum.cs" />
     <Compile Include="Enum\TipoDestinatarioNotificaEnum.cs" />
@@ -112,6 +113,7 @@
     <Compile Include="Model\ModificaStatoModel.cs" />
     <Compile Include="Model\PubblicaFascicoloModel.cs" />
     <Compile Include="Model\RaggruppaEmendamentiModel.cs" />
+    <Compile Include="Model\ResetPinModel.cs" />
     <Compile Include="Request\BaseRequest.cs" />
     <Compile Include="Request\NuovoEmendamentoRequest.cs" />
     <Compile Include="Request\StampaRequest.cs" />

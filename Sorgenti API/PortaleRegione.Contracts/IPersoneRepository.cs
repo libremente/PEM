@@ -48,6 +48,6 @@ namespace PortaleRegione.Contracts
         IEnumerable<UTENTI_NoCons> GetSegreteriaGiuntaRegionale(int id, bool notifica_firma,
             bool notifica_deposito);
 
-        void SavePin(Guid personaUId, string nuovo_pin, bool consigliere_assessore, bool reset);
+        void SavePin(Guid personaUId, string nuovo_pin, bool reset);
     }
 }

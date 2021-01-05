@@ -25,3 +25,46 @@
         </h5>
     </div>
 </div>
+<div class="row">
+    <div class="col s12">
+    @using (Html.BeginForm("SalvaPersona", "AdminPanel", FormMethod.Post, new { id = "formPersona" }))
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="form-group">
+            @Html.LabelFor(s => s.UID_persona)
+            @Html.TextBoxFor(s => s.UID_persona, new { @class = "form-control" })
+        </div>
+        
+        <div class="form-group">
+            @Html.LabelFor(s => s.cognome)
+            @Html.TextBoxFor(s => s.cognome, new { @class = "form-control" })
+        </div>
+        
+        <div class="form-group">
+            @Html.LabelFor(s => s.nome)
+            @Html.TextBoxFor(s => s.nome, new { @class = "form-control" })
+        </div>
+        
+        <div class="form-group">
+            @Html.LabelFor(s => s.email)
+            @Html.TextBoxFor(s => s.email, new { @class = "form-control" })
+        </div>
+        
+        <div class="form-group">
+            @Html.LabelFor(s => s.foto)
+            @Html.TextBoxFor(s => s.foto, new { @class = "form-control" })
+        </div>
+        
+        <div class="form-group">
+            @Html.LabelFor(s => s.userAD)
+            @Html.TextBoxFor(s => s.userAD, new { @class = "form-control" })
+        </div>
+        
+        <div class="form-group">
+            @Html.LabelFor(s => s.Gruppo)
+            @Html.TextBoxFor(s => s.Gruppo.nome_gruppo, new { @class = "form-control" })
+        </div>
+    }
+    </div>
+</div>

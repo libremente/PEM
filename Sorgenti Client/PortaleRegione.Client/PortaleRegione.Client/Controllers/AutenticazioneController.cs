@@ -61,7 +61,7 @@ namespace PortaleRegione.Client.Controllers
                 return View("FormAutenticazione", model);
             }
 
-            SalvaDatiInCookies(response.persona, response.jwt, model.Username);
+            await SalvaDatiInCookies(response.persona, response.jwt, model.Username);
 
             if (Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
 
@@ -84,7 +84,7 @@ namespace PortaleRegione.Client.Controllers
                 return HttpNotFound(e.Message);
             }
 
-            SalvaDatiInCookies(response.persona, response.jwt, response.persona.userAD.Replace(@"CONSIGLIO\", ""));
+            await SalvaDatiInCookies(response.persona, response.jwt, response.persona.userAD.Replace(@"CONSIGLIO\", ""));
 
             //if (Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
 
@@ -107,28 +107,15 @@ namespace PortaleRegione.Client.Controllers
                 return HttpNotFound(e.Message);
             }
 
-            SalvaDatiInCookies(response.persona, response.jwt, response.persona.userAD.Replace(@"CONSIGLIO\", ""));
-
-            //if (Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
+            await SalvaDatiInCookies(response.persona, response.jwt, response.persona.userAD.Replace(@"CONSIGLIO\", ""));
 
             return RedirectToAction("RiepilogoSedute", "Sedute");
         }
 
-        private void SalvaDatiInCookies(PersonaDto persona, string jwt, string username)
+        private async Task SalvaDatiInCookies(PersonaDto persona, string jwt, string username)
         {
             string jwt1 = string.Empty, jwt2 = string.Empty, jwt3 = string.Empty;
             SliceBy3(jwt, ref jwt1, ref jwt2, ref jwt3);
-
-            var gruppi = persona.GruppiAdmin.Any() ? JsonConvert.SerializeObject(persona.GruppiAdmin) : "";
-            var groupsTicket = new FormsAuthenticationTicket
-            (
-                1, "gruppi", DateTime.Now, DateTime.Now.AddMinutes(30), true, gruppi
-            );
-            var gTicket = FormsAuthentication.Encrypt(groupsTicket);
-            var gCookie = new HttpCookie("GCookies", gTicket) {HttpOnly = true};
-            Response.Cookies.Add(gCookie);
-
-            persona.GruppiAdmin = null;
 
             var persona_json = JsonConvert.SerializeObject(persona);
             string p1 = string.Empty, p2 = string.Empty, p3 = string.Empty;
@@ -189,8 +176,20 @@ namespace PortaleRegione.Client.Controllers
 
             #endregion
 
-            FormsAuthentication.SetAuthCookie(username, true);
             BaseGateway.access_token = jwt;
+            if (persona.CurrentRole == RuoliIntEnum.Amministratore_PEM)
+            {
+                var gruppi = await ApiGateway.GetGruppi();
+                var groupsTicket = new FormsAuthenticationTicket
+                (
+                    1, "gruppi", DateTime.Now, DateTime.Now.AddMinutes(30), true, JsonConvert.SerializeObject(gruppi)
+                );
+                var gTicket = FormsAuthentication.Encrypt(groupsTicket);
+                var gCookie = new HttpCookie("GCookies", gTicket) {HttpOnly = true};
+                Response.Cookies.Add(gCookie);
+            }
+
+            FormsAuthentication.SetAuthCookie(username, true);
         }
 
         [HttpPost]

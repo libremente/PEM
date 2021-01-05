@@ -19,11 +19,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 using AutoMapper;
 using ExpressionBuilder.Generics;
 using PortaleRegione.Contracts;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Domain;
+using PortaleRegione.DTO.Enum;
 using PortaleRegione.DTO.Request;
 using PortaleRegione.Logger;
 
@@ -49,13 +51,15 @@ namespace PortaleRegione.BAL
                 var queryFilter = new Filter<View_UTENTI>();
                 queryFilter.ImportStatements(model.filtro);
 
-                return _unitOfWork
+                var listaPersone = _unitOfWork
                     .Persone
                     .GetAll(model.page,
                         model.size,
                         queryFilter)
                     .ToList()
                     .Select(Mapper.Map<View_UTENTI, PersonaDto>);
+
+                return listaPersone;
             }
             catch (Exception e)
             {
@@ -66,11 +70,74 @@ namespace PortaleRegione.BAL
 
         #endregion
 
+        #region GetGroups
+
+        public List<string> GetADGroups(string userName, string simplefilter = "")
+        {
+            var result = new List<string>();
+            try
+            {
+                var wi = new WindowsIdentity(userName);
+
+                foreach (var group in wi.Groups)
+                    try
+                    {
+                        if (simplefilter != "")
+                        {
+                            if (group.Translate(typeof(NTAccount)).ToString().Contains(simplefilter))
+                                result.Add(group.Translate(typeof(NTAccount)).ToString().Replace(@"CONSIGLIO\", ""));
+                        }
+                        else
+                        {
+                            result.Add(group.Translate(typeof(NTAccount)).ToString().Replace(@"CONSIGLIO\", ""));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+
+                result.Sort();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                var result_vuoto = new List<string>();
+                result_vuoto.Add("");
+                return result_vuoto;
+            }
+        }
+
+        #endregion
+
         #region GetPersona
 
         public PersonaDto GetPersona(int id)
         {
             return _logicPersona.GetPersona(id);
+        }
+        
+        public PersonaDto GetPersona(Guid id)
+        {
+            return _logicPersona.GetPersona(id);
+        }
+        
+        public PersonaDto GetPersona(PersonaDto persona, List<string> gruppi_utente)
+        {
+            var ruoli_utente = _unitOfWork.Ruoli.RuoliUtente(gruppi_utente).ToList();
+            persona.Ruoli = ruoli_utente.Select(Mapper.Map<RUOLI, RuoliDto>);
+            persona.CurrentRole = (RuoliIntEnum) ruoli_utente[0].IDruolo;
+            persona.Gruppo = _unitOfWork.Gruppi.GetGruppoPersona(gruppi_utente, persona.IsGiunta());
+
+            if (gruppi_utente.Any())
+                persona.Gruppi = gruppi_utente.Aggregate((i, j) => i + "; " + j);
+
+            var gruppiUtente_AD = GetADGroups(persona.userAD.Replace(@"CONSIGLIO\", ""));
+            if (gruppiUtente_AD.Any())
+                persona.GruppiAD = gruppiUtente_AD.Aggregate((i, j) => i + "; " + j);
+
+            CheckPin(ref persona);
+
+            return persona;
         }
 
         #endregion
@@ -93,6 +160,25 @@ namespace PortaleRegione.BAL
                 Log.Error("Logic - CountAll", e);
                 throw e;
             }
+        }
+
+        #endregion
+
+        #region GetPin
+
+        /// <summary>
+        /// Controlla il pin della persona
+        /// </summary>
+        /// <param name="persona"></param>
+        public void CheckPin(ref PersonaDto persona)
+        {       
+            var pinInDb = _logicPersona.GetPin(persona);
+            if (pinInDb == null)
+                persona.Stato_Pin = StatoPinEnum.NESSUNO;
+            else if (pinInDb.RichiediModificaPIN)
+                persona.Stato_Pin = StatoPinEnum.RESET;
+            else
+                persona.Stato_Pin = StatoPinEnum.VALIDO;
         }
 
         #endregion

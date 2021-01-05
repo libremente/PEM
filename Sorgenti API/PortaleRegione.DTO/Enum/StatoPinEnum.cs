@@ -16,25 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.ComponentModel.DataAnnotations;
-
-namespace PortaleRegione.DTO.Model
+namespace PortaleRegione.DTO.Enum
 {
-    public class CambioPinModel
+    public enum StatoPinEnum
     {
-        public Guid PersonaUId { get; set; }
-
-        [Required]
-        [Display(Name = "Vecchio PIN")]
-        public string vecchio_pin { get; set; }
-        
-        [Required]
-        [Display(Name = "Nuovo PIN")]
-        public string nuovo_pin { get; set; }
-        
-        [Required]
-        [Display(Name = "Conferma PIN")]
-        public string conferma_pin { get; set; }
+        VALIDO = 1,
+        RESET = 2,
+        NESSUNO = 3
     }
 }

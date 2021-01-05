@@ -1,4 +1,5 @@
-﻿@model PortaleRegione.DTO.Response.BaseResponse<PortaleRegione.DTO.Domain.PersonaDto>
+﻿@using PortaleRegione.DTO.Enum
+@model PortaleRegione.DTO.Response.BaseResponse<PortaleRegione.DTO.Domain.PersonaDto>
 
 @{
     ViewBag.Title = "Amministrazione";
@@ -33,14 +34,83 @@
 
     @foreach (var persona in Model.Results)
     {
-        <div class="col l4 m6 s12">
-            <div class="card hoverable">
-                <div class="card-content" onclick="go('@Url.Action("ViewUtente", "AdminPanel", new {id = persona.id_persona})')">
-                    <h5 class="card-title">
-                        <span>@persona.DisplayName</span>
-                    </h5>
+        var colorPin = "";
+        var messaggio = "";
+        switch (persona.Stato_Pin)
+        {
+            case StatoPinEnum.VALIDO:
+            {
+                messaggio = "Pin valido";
+                colorPin = "green";
+                break;
+            }
+            case StatoPinEnum.RESET:
+                {
+                    messaggio = "Pin da resettare";
+                    colorPin = "orange";
+                    break;
+                }
+            case StatoPinEnum.NESSUNO:
+                {
+                    messaggio = "Nessun pin impostato";
+                    colorPin = "red";
+                    break;
+                }
+        }
+        <div class="col l6 m6 s12">
+            <div class="card hoverable" title="@persona.DisplayName">
+                <div class="card-action grey lighten-4 center">
+                    <div class="row valign-wrapper" style="margin: 0 !important; padding: 0 !important">
+                        <div class="col s6 left-align">
+                            <div class="chip white-text @colorPin" style="min-width: unset">@messaggio</div>
+                        </div>
+                        <div class="col s6 right-align">
+                            <a class="hoverable center black-text" onclick="openResetPin('@persona.UID_persona', '@persona.DisplayName')" title="RESET pin">
+                                <i class="material-icons">lock</i>
+                            </a>
+                            <a class="hoverable center black-text" onclick="openResetPassword('@persona.UID_persona', '@persona.DisplayName')" title="RESET password">
+                                <i class="material-icons">vpn_key</i>
+                            </a>
+                            <a class="hoverable center black-text" onclick="go('@Url.Action("ViewUtente", "AdminPanel", new {id = persona.UID_persona})')" title="Modifica @persona.UID_persona">
+                                <i class="material-icons">chevron_right</i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-content" onclick="">
+                    <div class="row valign-wrapper" style="margin:unset!important">
+                        <div class="col s3 center">
+                            <img class="responsive-img circle" style="width: 80px;height: 80px;" src='http://intranet.consiglio.regione.lombardia.it/GC/foto/@persona.foto'>
+                        </div>
+                        <div class="col s9">
+                            <h5 class="card-title truncate">
+                                <span>@persona.DisplayName</span>
+                            </h5>
+                            <p>
+                                @persona.userAD
+                            </p>
+                            <p>
+                                @{
+                                    var gruppi = "--";
+                                    if (!string.IsNullOrEmpty(persona.Gruppi))
+                                    {
+                                        gruppi = persona.Gruppi;
+                                    }
+                                }
+                                <b>Gruppi A.D. PEM:</b> @gruppi
+
+                                @if (!string.IsNullOrEmpty(persona.GruppiAD))
+                                {
+                                    <i class="material-icons tiny activator">add</i>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-reveal">
+                    <span class="card-title grey-text text-darken-4">Altri Gruppi A.D.<i class="material-icons right">close</i></span>
                     <p>
-                        @persona.userAD
+                        @persona.GruppiAD
                     </p>
                 </div>
             </div>
@@ -56,7 +126,38 @@
     </ul>
 </div>
 
+<div id="modalResetPin" class="modal">
+    <div class="modal-content">
+        <h5>Attenzione</h5>
+        <p>Sei sicuro di voler resettare il pin di <b id="txtDisplayNamePersonaPin"></b>?</p>
+        <div class="modal-footer">
+            <button type="button" class="btn modal-close grey">Annulla</button>
+            <a id="btnConfermaEliminazione" class="btn red" href="#">RESET PIN</a>
+        </div>
+    </div>
+</div>
+
+<div id="modalResetPassword" class="modal">
+    <div class="modal-content">
+        <h5>Attenzione</h5>
+        <p>Sei sicuro di voler resettare la password di <b id="txtDisplayNamePersonaPassword"></b>?</p> 
+        <div class="modal-footer">
+            <button type="button" class="btn modal-close grey">Annulla</button>
+            <a id="btnConfermaEliminazione" class="btn red" href="#">RESET PASSWORD</a>
+        </div>
+    </div>
+</div>
+
 <script>
+    function openResetPin(id, displayName) {
+        $('#txtDisplayNamePersonaPin').text(displayName);
+        $('#modalResetPin').modal('open');
+    }
+    function openResetPassword(id, displayName) {
+        $('#txtDisplayNamePersonaPassword').text(displayName);
+        $('#modalResetPassword').modal('open');
+    }
+
     $(document).ready(function () {
         Reset_ClientMode();
     });

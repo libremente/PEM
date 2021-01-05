@@ -17,9 +17,12 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Http;
 using PortaleRegione.API.Helpers;
+using PortaleRegione.API.it.lombardia.regione.consiglio.intranet;
 using PortaleRegione.BAL;
 using PortaleRegione.DTO.Domain;
 using PortaleRegione.DTO.Enum;
@@ -59,10 +62,26 @@ namespace PortaleRegione.API.Controllers
             {
                 var results = _logic.GetPersoneIn_DB(model);
 
+                var intranetAdService = new proxyAD();
+                var personaDtos = results.ToList();
+                personaDtos.ToList().ForEach(persona =>
+                {
+                    var gruppiUtente_PEM = new List<string>(intranetAdService.GetGroups(
+                        persona.userAD.Replace(@"CONSIGLIO\", ""), "PEM_", AppSettingsConfiguration.TOKEN_R));
+                    if (gruppiUtente_PEM.Any())
+                        persona.Gruppi = gruppiUtente_PEM.Aggregate((i, j) => i + "; " + j);
+
+                    var gruppiUtente_AD = _logic.GetADGroups(persona.userAD.Replace(@"CONSIGLIO\", ""));
+                    if (gruppiUtente_AD.Any())
+                        persona.GruppiAD = gruppiUtente_AD.Aggregate((i, j) => i + "; " + j);
+
+                    _logic.CheckPin(ref persona);
+                });
+
                 return Ok(new BaseResponse<PersonaDto>(
                     model.page,
                     model.size,
-                    results,
+                    personaDtos,
                     model.filtro,
                     _logic.Count(model),
                     Request.RequestUri));
@@ -70,6 +89,39 @@ namespace PortaleRegione.API.Controllers
             catch (Exception e)
             {
                 Log.Error("GetUtenti", e);
+                return ErrorHandler(e);
+            }
+        }
+
+        /// <summary>
+        ///     Endpoint per avere un utente nel db
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("view/{id:guid}")]
+        public async Task<IHttpActionResult> GetUtente(Guid id)
+        {
+            try
+            {
+                var persona = _logic.GetPersona(id);
+
+                var intranetAdService = new proxyAD();
+
+                var lRuoli = new List<string>();
+                var Gruppi_Utente = new List<string>(intranetAdService.GetGroups(
+                    persona.userAD.Replace(@"CONSIGLIO\", ""), "PEM_", AppSettingsConfiguration.TOKEN_R));
+
+                foreach (var group in Gruppi_Utente)
+                    lRuoli.Add($"CONSIGLIO\\{group}");
+
+                var personaResult = _logic.GetPersona(persona, lRuoli);
+
+                return Ok(personaResult);
+            }
+            catch (Exception e)
+            {
+                Log.Error("GetUtente", e);
                 return ErrorHandler(e);
             }
         }

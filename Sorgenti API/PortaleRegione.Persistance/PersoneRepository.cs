@@ -221,20 +221,15 @@ namespace PortaleRegione.Persistance
             return result;
         }
 
-        public void SavePin(Guid personaUId, string nuovo_pin, bool no_cons, bool reset)
+        public void SavePin(Guid personaUId, string nuovo_pin, bool reset)
         {
-            if (no_cons)
-            {
-                PRContext.Database.ExecuteSqlCommand(
-                    $"UPDATE PINS_NoCons SET Al=GETDATE() WHERE Al IS NULL AND UID_persona='{personaUId}'");
-                PRContext.Database.ExecuteSqlCommand(
-                    $"INSERT INTO PINS_NoCons (UID_persona,PIN,RichiediModificaPIN) VALUES ('{personaUId}','{nuovo_pin}',{(reset ? 1 : 0)})");
-            }
-
+            var persona = Get(personaUId);
+            var no_cons = Convert.ToBoolean(persona.No_Cons);
+            var table = no_cons ? "PINS_NoCons" : "PINS";
             PRContext.Database.ExecuteSqlCommand(
-                $"UPDATE PINS SET Al=GETDATE() WHERE Al IS NULL AND UID_persona='{personaUId}'");
+                $"UPDATE {table} SET Al=GETDATE() WHERE Al IS NULL AND UID_persona='{personaUId}'");
             PRContext.Database.ExecuteSqlCommand(
-                $"INSERT INTO PINS (UID_persona,PIN,RichiediModificaPIN) VALUES ('{personaUId}','{nuovo_pin}',{(reset ? 1 : 0)})");
+                $"INSERT INTO {table} (UID_persona,PIN,RichiediModificaPIN) VALUES ('{personaUId}','{nuovo_pin}',{(reset ? 1 : 0)})");
         }
 
         public IEnumerable<View_Composizione_GiuntaRegionale> GetGiuntaRegionale()

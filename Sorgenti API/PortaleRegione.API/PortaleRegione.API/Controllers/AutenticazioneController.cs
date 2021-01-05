@@ -34,6 +34,7 @@ using PortaleRegione.Contracts;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Autenticazione;
 using PortaleRegione.DTO.Domain;
+using PortaleRegione.DTO.Domain.Essentials;
 using PortaleRegione.DTO.Enum;
 using PortaleRegione.DTO.Model;
 using PortaleRegione.DTO.Response;
@@ -143,10 +144,6 @@ namespace PortaleRegione.API.Controllers
 
                 var token = GetToken(personaDto, lRuoli);
 
-                personaDto.GruppiAdmin = personaDto.CurrentRole == RuoliIntEnum.Amministratore_PEM
-                    ? _unitOfWork.Gruppi.GetAll(_unitOfWork.Legislature.Legislatura_Attiva())
-                    : new List<KeyValueDto>();
-
                 return Ok(new LoginResponse
                 {
                     jwt = token,
@@ -195,10 +192,6 @@ namespace PortaleRegione.API.Controllers
 
                 var token = GetToken(persona);
 
-                persona.GruppiAdmin = persona.CurrentRole == RuoliIntEnum.Amministratore_PEM
-                    ? _unitOfWork.Gruppi.GetAll(_unitOfWork.Legislature.Legislatura_Attiva())
-                    : new List<KeyValueDto>();
-
                 return Ok(new LoginResponse
                 {
                     jwt = token,
@@ -233,11 +226,7 @@ namespace PortaleRegione.API.Controllers
                 persona.Gruppo = gruppoDto;
                 persona.CurrentRole = RuoliIntEnum.Responsabile_Segreteria_Politica;
                 var token = GetToken(persona);
-
-                persona.GruppiAdmin = persona.CurrentRole == RuoliIntEnum.Amministratore_PEM
-                    ? _unitOfWork.Gruppi.GetAll(_unitOfWork.Legislature.Legislatura_Attiva())
-                    : new List<KeyValueDto>();
-
+                
                 return Ok(new LoginResponse
                 {
                     jwt = token,
@@ -276,7 +265,7 @@ namespace PortaleRegione.API.Controllers
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Role, ruoli_utente[0].IDruolo.ToString()),
-                    new Claim(ClaimTypes.UserData, JsonConvert.SerializeObject(personaDto))
+                    new Claim(ClaimTypes.Name, personaDto.UID_persona.ToString())
                 };
 
                 var tokenDescriptor = new SecurityTokenDescriptor
@@ -315,7 +304,7 @@ namespace PortaleRegione.API.Controllers
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Role, Convert.ToInt32(personaDto.CurrentRole).ToString()),
-                    new Claim(ClaimTypes.UserData, JsonConvert.SerializeObject(personaDto))
+                    new Claim(ClaimTypes.Name, personaDto.UID_persona.ToString())
                 };
 
                 var tokenDescriptor = new SecurityTokenDescriptor

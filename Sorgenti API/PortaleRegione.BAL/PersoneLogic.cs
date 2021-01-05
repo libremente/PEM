@@ -24,6 +24,7 @@ using AutoMapper;
 using PortaleRegione.Contracts;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Domain;
+using PortaleRegione.DTO.Enum;
 using PortaleRegione.DTO.Model;
 
 namespace PortaleRegione.BAL
@@ -43,7 +44,10 @@ namespace PortaleRegione.BAL
 
         public PinDto GetPin(PersonaDto persona)
         {
-            var pin = Mapper.Map<View_PINS, PinDto>(_unitOfWork.Persone.GetPin(persona.UID_persona));
+            var pinInDb = _unitOfWork.Persone.GetPin(persona.UID_persona);
+            if (pinInDb == null)
+                return null;
+            var pin = Mapper.Map<View_PINS, PinDto>(pinInDb);
             pin.PIN_Decrypt = Decrypt(pin.PIN);
             return pin;
         }
@@ -52,12 +56,23 @@ namespace PortaleRegione.BAL
 
         #region CambioPin
 
-        public async Task CambioPin(CambioPinModel model, PersonaDto persona)
+        public async Task CambioPin(CambioPinModel model)
         {
-            _unitOfWork.Persone.SavePin(persona.UID_persona,
+            _unitOfWork.Persone.SavePin(model.PersonaUId,
                 EncryptString(model.nuovo_pin, AppSettingsConfiguration.masterKey),
-                Convert.ToBoolean(persona.No_Cons),
-                model.reset);
+                false);
+            await _unitOfWork.CompleteAsync();
+        }
+
+        #endregion
+        
+        #region ResetPin
+
+        public async Task ResetPin(ResetPinModel model)
+        {
+            _unitOfWork.Persone.SavePin(model.PersonaUId,
+                EncryptString(model.nuovo_pin, AppSettingsConfiguration.masterKey),
+                true);
             await _unitOfWork.CompleteAsync();
         }
 
@@ -127,7 +142,12 @@ namespace PortaleRegione.BAL
         public PersonaDto GetPersona(int personaId)
         {
             var persona = Mapper.Map<View_UTENTI, PersonaDto>(_unitOfWork.Persone.Get(personaId));
-            //persona.Gruppo = GetGruppoAttualePersona(persona, isGiunta);
+            return persona;
+        }
+        
+        public PersonaDto GetPersona(Guid personaUId)
+        {
+            var persona = Mapper.Map<View_UTENTI, PersonaDto>(_unitOfWork.Persone.Get(personaUId));
             return persona;
         }
 

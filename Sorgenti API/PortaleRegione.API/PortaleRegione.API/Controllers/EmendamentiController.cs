@@ -435,10 +435,12 @@ namespace PortaleRegione.API.Controllers
                 }
 
                 var pinInDb = _logicPersone.GetPin(currentUser.Persona);
-                if (firmaModel.Pin != pinInDb.PIN_Decrypt)
-                    return BadRequest("Pin inserito non valido");
+                if (pinInDb == null)
+                    return BadRequest("Pin non impostato");
                 if (pinInDb.RichiediModificaPIN)
                     return BadRequest("E' richiesto il reset del pin");
+                if (firmaModel.Pin != pinInDb.PIN_Decrypt)
+                    return BadRequest("Pin inserito non valido");
 
                 return Ok(await _logicEm.FirmaEmendamento(firmaModel, currentUser.Persona, pinInDb));
             }
@@ -471,10 +473,12 @@ namespace PortaleRegione.API.Controllers
                 }
 
                 var pinInDb = _logicPersone.GetPin(currentUser.Persona);
-                if (firmaModel.Pin != pinInDb.PIN_Decrypt)
-                    return BadRequest("Pin inserito non valido");
+                if (pinInDb == null)
+                    return BadRequest("Pin non impostato");
                 if (pinInDb.RichiediModificaPIN)
                     return BadRequest("E' richiesto il reset del pin");
+                if (firmaModel.Pin != pinInDb.PIN_Decrypt)
+                    return BadRequest("Pin inserito non valido");
 
                 return Ok(await _logicEm.RitiroFirmaEmendamento(firmaModel, currentUser.Persona));
             }
@@ -497,10 +501,12 @@ namespace PortaleRegione.API.Controllers
             try
             {
                 var pinInDb = _logicPersone.GetPin(currentUser.Persona);
-                if (firmaModel.Pin != pinInDb.PIN_Decrypt)
-                    return BadRequest("Pin inserito non valido");
+                if (pinInDb == null)
+                    return BadRequest("Pin non impostato");
                 if (pinInDb.RichiediModificaPIN)
                     return BadRequest("E' richiesto il reset del pin");
+                if (firmaModel.Pin != pinInDb.PIN_Decrypt)
+                    return BadRequest("Pin inserito non valido");
 
                 return Ok(await _logicEm.EliminaFirmaEmendamento(firmaModel, currentUser.Persona));
             }
@@ -542,10 +548,12 @@ namespace PortaleRegione.API.Controllers
                 }
 
                 var pinInDb = _logicPersone.GetPin(currentUser.Persona);
-                if (depositoModel.Pin != pinInDb.PIN_Decrypt)
-                    return BadRequest("Pin inserito non valido");
+                if (pinInDb == null)
+                    return BadRequest("Pin non impostato");
                 if (pinInDb.RichiediModificaPIN)
                     return BadRequest("E' richiesto il reset del pin");
+                if (depositoModel.Pin != pinInDb.PIN_Decrypt)
+                    return BadRequest("Pin inserito non valido");
 
                 return Ok(await _logicEm.DepositaEmendamento(depositoModel, currentUser.Persona));
             }

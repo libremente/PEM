@@ -2121,26 +2121,26 @@ namespace PortaleRegione.Gateway
 
         #endregion
 
-        #region GetComponentiGruppo
+        #region GetGruppi
 
-        public static async Task<IEnumerable<PersonaDto>> GetComponentiGruppo()
+        public static async Task<IEnumerable<KeyValueDto>> GetGruppi()
         {
             try
             {
                 var requestUrl = $"{apiUrl}/persone/gruppi";
 
-                var lst = JsonConvert.DeserializeObject<IEnumerable<PersonaDto>>(await Get(requestUrl));
+                var lst = JsonConvert.DeserializeObject<IEnumerable<KeyValueDto>>(await Get(requestUrl));
 
                 return lst;
             }
             catch (UnauthorizedAccessException ex)
             {
-                Log.Error("GetComponentiGruppo", ex);
+                Log.Error("GetGruppi", ex);
                 throw ex;
             }
             catch (Exception ex)
             {
-                Log.Error("GetComponentiGruppo", ex);
+                Log.Error("GetGruppi", ex);
                 throw ex;
             }
         }
@@ -2337,7 +2337,7 @@ namespace PortaleRegione.Gateway
 
         #region GetPersonaAdmin
 
-        public static async Task<PersonaDto> GetPersonaAdmin(int id)
+        public static async Task<PersonaDto> GetPersonaAdmin(Guid id)
         {
             try
             {
@@ -2387,6 +2387,31 @@ namespace PortaleRegione.Gateway
             catch (Exception ex)
             {
                 Log.Error("GetPersoneAdmin", ex);
+                throw ex;
+            }
+        }
+
+        #endregion
+
+        #region ModificaPersona
+
+        public static async Task ModificaPersona(PersonaDto persona)
+        {
+            try
+            {
+                var requestUrl = $"{apiUrl}/admin/salva";
+                var body = JsonConvert.SerializeObject(persona);
+
+                await Post(requestUrl, body);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Log.Error("ModificaPersona", ex);
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("ModificaPersona", ex);
                 throw ex;
             }
         }

@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using System.Web.Http;
 using AutoMapper;
 using PortaleRegione.API.Helpers;
+using PortaleRegione.API.it.lombardia.regione.consiglio.intranet;
 using PortaleRegione.BAL;
 using PortaleRegione.Contracts;
 using PortaleRegione.Domain;
@@ -238,7 +239,9 @@ namespace PortaleRegione.API.Controllers
 
                 var currentPin = _logicPersone.GetPin(currentUser.Persona);
                 if (currentPin == null)
-                    return BadRequest("Nessun PIN impostato oppure il PIN dev'essere resettato!!!");
+                    return BadRequest("Pin non impostato");
+                if (currentPin.RichiediModificaPIN)
+                    return BadRequest("E' richiesto il reset del pin");
                 if (currentPin.PIN_Decrypt != model.vecchio_pin)
                     return BadRequest("Il vecchio PIN non è corretto!!!");
 
@@ -249,7 +252,9 @@ namespace PortaleRegione.API.Controllers
                 if (model.nuovo_pin.Length != 4)
                     return BadRequest("Il PIN dev'essere un numero di massimo 4 cifre!");
 
-                await _logicPersone.CambioPin(model, currentUser.Persona);
+                model.PersonaUId = currentUser.Persona.UID_persona;
+
+                await _logicPersone.CambioPin(model);
 
                 return Ok("OK");
             }
@@ -280,6 +285,57 @@ namespace PortaleRegione.API.Controllers
             catch (Exception e)
             {
                 Log.Error("GetPersone", e);
+                return ErrorHandler(e);
+            }
+        }
+
+        [Authorize(Roles = RuoliEnum.Amministratore_PEM)]
+        [HttpPost]
+        [Route("reset-pwd")]
+        public async Task<IHttpActionResult> ResetPassword(string nuova)
+        {
+            try
+            {
+                string ris;
+                var IntranetADService = new proxyAD();
+                ris = IntranetADService
+                    .ChangeADUserPass(
+                        currentUser.Persona.userAD.Replace(@"CONSIGLIO\", ""),
+                        string.Empty,
+                        nuova,
+                        AppSettingsConfiguration.TOKEN_W);
+                if (!ris.Contains("0:")) return BadRequest("Reset password non riuscito. Motivo: " + ris);
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                Log.Error("ResetPassword", e);
+                return ErrorHandler(e);
+            }
+        }
+        
+        [Authorize(Roles = RuoliEnum.Amministratore_PEM)]
+        [HttpPost]
+        [Route("reset-pin")]
+        public async Task<IHttpActionResult> ResetPin(ResetPinModel model)
+        {
+            try
+            {
+                int valuePin;
+                var checkTry = int.TryParse(model.nuovo_pin, out valuePin);
+                if (!checkTry)
+                    return BadRequest("Il pin deve contenere solo cifre numeriche");
+                if (model.nuovo_pin.Length != 4)
+                    return BadRequest("Il PIN dev'essere un numero di massimo 4 cifre!");
+
+                await _logicPersone.ResetPin(model);
+
+                return Ok("OK");
+            }
+            catch (Exception e)
+            {
+                Log.Error("ResetPin", e);
                 return ErrorHandler(e);
             }
         }

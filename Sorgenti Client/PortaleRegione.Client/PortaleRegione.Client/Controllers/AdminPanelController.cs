@@ -16,9 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.Threading.Tasks;
 using System.Web.Mvc;
+using PortaleRegione.DTO.Domain;
 using PortaleRegione.DTO.Enum;
+using PortaleRegione.DTO.Response;
 using PortaleRegione.Gateway;
 
 namespace PortaleRegione.Client.Controllers
@@ -44,10 +47,29 @@ namespace PortaleRegione.Client.Controllers
         }
 
         [HttpGet]
-        [Route("view/{id:int}")]
-        public async Task<ActionResult> ViewUtente(int id)
+        [Route("view/{id:guid}")]
+        public async Task<ActionResult> ViewUtente(Guid id)
         {
             return View("ViewUtente", await ApiGateway.GetPersonaAdmin(id));
+        }
+
+        [HttpPost]
+        [Route("salva")]
+        public async Task<ActionResult> SalvaPersona(PersonaDto persona)
+        {
+            try
+            {
+                await ApiGateway.ModificaPersona(persona);
+
+                return Json(Url.Action("ViewUtente", "AdminPanel", new {id = persona.UID_persona})
+                    , JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return Json(new ErrorResponse {message = e.Message}, JsonRequestBehavior.AllowGet);
+            }
+            ;
         }
     }
 }
