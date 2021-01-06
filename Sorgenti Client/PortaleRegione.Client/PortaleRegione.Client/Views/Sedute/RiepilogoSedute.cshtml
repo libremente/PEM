@@ -61,37 +61,10 @@
     }
 </div>
 
-<div id="slide-out-DX" class="sidenav">
-    <div class="row">
-        <div class="col s12">
-            <h6>
-                <b>
-                    <span>Ricerca</span>
-                </b>
-            </h6>
-        </div>
-    </div>
-    @using (Html.BeginForm("Filtri_RiepilogoSedute", "Sedute", FormMethod.Post, new {id = "formFiltraSedute"}))
-    {
-        @Html.AntiForgeryToken()
+@{
+    Html.RenderPartial("_SeduteFiltri", Model.Paging);
+}
 
-        <input type="hidden" name="page" value="@Model.Paging.Page"/>
-        <input type="hidden" name="size" value="@Model.Paging.Limit"/>
-        <div class="row">
-            <div class="col s12">
-                <div class="form-group">
-                    <label>Legislatura</label>
-                    <select id="filter_sedute_legislature" name="filtro_legislatura" class="form-control" onchange="filter_sedute_legislature_OnChange()"></select>
-                </div>
-            </div>
-        </div>
-    }
-    <div class="fixed-action-btn" style="bottom: 150px !important; left: 23px; right: unset !important;">
-        <a class="chip hoverable blue center white-text" onclick="filtra()" style="width: 255px;">
-            <i class="icon material-icons">search</i> Filtra
-        </a>
-    </div>
-</div>
 
 <script>
     $(document).ready(function() {
@@ -99,7 +72,10 @@
         if (filters == 0)
             set_Filtri_Sedute({});
 
-        Filtri_CaricaLegislature("filter_sedute_legislature");
+        Filtri_Sedute_CaricaLegislature("filter_sedute_legislature");
+        Filtri_Sedute_CaricaAnni("filter_sedute_anno");
+        Filtri_Sedute_CaricaDa("filter_sedute_da");
+        Filtri_Sedute_CaricaA("filter_sedute_a");
     });
 
     function filtra() {

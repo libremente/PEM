@@ -106,6 +106,9 @@ namespace PortaleRegione.Client.Controllers
         public async Task<ActionResult> Filtri_RiepilogoSedute()
         {
             int.TryParse(Request.Form["filtro_legislatura"], out var filtro_legislatura);
+            int.TryParse(Request.Form["filtro_anno"], out var filtro_anno);
+            var filtro_da = Request.Form["filtro_da"];
+            var filtro_a = Request.Form["filtro_a"];
             int.TryParse(Request.Form["page"], out var filtro_page);
             int.TryParse(Request.Form["size"], out var filtro_size);
 
@@ -121,6 +124,31 @@ namespace PortaleRegione.Client.Controllers
                     PropertyId = nameof(SeduteDto.id_legislatura),
                     Operation = Operation.EqualTo,
                     Value = filtro_legislatura
+                });
+            
+            if (filtro_anno > 0)
+                model.filtro.Add(new FilterStatement<SeduteDto>
+                {
+                    PropertyId = nameof(SeduteDto.Data_seduta),
+                    Operation = Operation.Between,
+                    Value = new DateTime(filtro_anno, 1,1).ToString("yyyy-MM-dd"),
+                    Value2 = new DateTime(filtro_anno, 12,31).ToString("yyyy-MM-dd")
+                });
+            
+            if (!string.IsNullOrEmpty(filtro_da))
+                model.filtro.Add(new FilterStatement<SeduteDto>
+                {
+                    PropertyId = nameof(SeduteDto.Data_seduta),
+                    Operation = Operation.GreaterThan,
+                    Value = Convert.ToDateTime(filtro_da).ToString("yyyy-MM-dd")
+                });
+            
+            if (!string.IsNullOrEmpty(filtro_a))
+                model.filtro.Add(new FilterStatement<SeduteDto>
+                {
+                    PropertyId = nameof(SeduteDto.Data_seduta),
+                    Operation = Operation.LessThan,
+                    Value = Convert.ToDateTime(filtro_a).ToString("yyyy-MM-dd")
                 });
 
             if (!model.filtro.Any())

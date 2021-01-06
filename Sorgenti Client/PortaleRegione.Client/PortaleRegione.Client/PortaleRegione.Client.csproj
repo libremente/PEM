@@ -213,6 +213,7 @@
     <Content Include="Views\Notifiche\_CardInvito_Destinatari.cshtml" />
     <Content Include="Views\AdminPanel\RiepilogoUtenti.cshtml" />
     <Content Include="Views\AdminPanel\ViewUtente.cshtml" />
+    <Content Include="Views\Sedute\_SeduteFiltri.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

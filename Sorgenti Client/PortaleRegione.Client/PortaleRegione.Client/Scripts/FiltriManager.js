@@ -2,7 +2,7 @@
     set_Filtri_Sedute({});
 }
 
-async function Filtri_CaricaLegislature(ctrlSelect) {
+async function Filtri_Sedute_CaricaLegislature(ctrlSelect) {
     var filterSelect = 0;
     var filtri = get_Filtri_Sedute();
     if (filtri != null) {
@@ -30,6 +30,55 @@ async function Filtri_CaricaLegislature(ctrlSelect) {
     }
 }
 
+async function Filtri_Sedute_CaricaAnni(ctrlSelect) {
+    var filterSelect = 0;
+    var filtri = get_Filtri_Sedute();
+    if (filtri != null) {
+        filterSelect = filtri.anno;
+    }
+    var currentYear = new Date().getFullYear();
+    var select = $("#" + ctrlSelect);
+    select.empty();
+    select.append('<option value="0">Seleziona</option>');
+
+    for (var i = 5; i >= 0; i--) {
+        var template = "";
+        if (currentYear == filterSelect)
+            template = "<option selected='selected'></option>";
+        else
+            template = "<option></option>";
+        select.append($(template).val(currentYear).html(currentYear));
+        currentYear--;
+    }
+
+    var elems = document.querySelectorAll("#" + ctrlSelect);
+    M.FormSelect.init(elems, null);
+}
+
+async function Filtri_Sedute_CaricaDa(ctrlSelect) {
+    var filterSelect = 0;
+    var filtri = get_Filtri_Sedute();
+    if (filtri != null) {
+        filterSelect = filtri.da;
+    }
+
+    var select = $("#" + ctrlSelect);
+    select.empty();
+    select.val(filterSelect);
+}
+
+async function Filtri_Sedute_CaricaA(ctrlSelect) {
+    var filterSelect = 0;
+    var filtri = get_Filtri_Sedute();
+    if (filtri != null) {
+        filterSelect = filtri.a;
+    }
+
+    var select = $("#" + ctrlSelect);
+    select.empty();
+    select.val(filterSelect);
+}
+
 function GetLegislature() {
     var legislature = get_ListaLegislature();
     if (legislature.length > 0) {
@@ -54,5 +103,26 @@ function filter_sedute_legislature_OnChange() {
     var value = $("#filter_sedute_legislature").children("option:selected").val();
     var filtri_sedute = get_Filtri_Sedute();
     filtri_sedute.legislatura = value;
+    set_Filtri_Sedute(filtri_sedute);
+}
+
+function filter_sedute_anno_OnChange() {
+    var value = $("#filter_sedute_anno").children("option:selected").val();
+    var filtri_sedute = get_Filtri_Sedute();
+    filtri_sedute.anno = value;
+    set_Filtri_Sedute(filtri_sedute);
+}
+
+function filter_sedute_a_OnChange() {
+    var value = $("#filter_sedute_a").val();
+    var filtri_sedute = get_Filtri_Sedute();
+    filtri_sedute.a = value;
+    set_Filtri_Sedute(filtri_sedute);
+}
+
+function filter_sedute_da_OnChange() {
+    var value = $("#filter_sedute_da").val();
+    var filtri_sedute = get_Filtri_Sedute();
+    filtri_sedute.da = value;
     set_Filtri_Sedute(filtri_sedute);
 }
