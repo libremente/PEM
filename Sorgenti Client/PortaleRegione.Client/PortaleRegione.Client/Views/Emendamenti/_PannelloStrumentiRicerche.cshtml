@@ -1,9 +1,31 @@
 ﻿<div id="slide-out-DX" class="sidenav">
     <ul class="collapsible">
         <li>
-            <div class="collapsible-header"><i class="material-icons">search</i>Filtri</div>
+            <div class="collapsible-header"><i class="material-icons">search</i>Ricerca</div>
             <div class="collapsible-body">
-                <span>Lorem ipsum dolor sit amet.</span>
+                @using (Html.BeginForm("Filtri_RiepilogoEM", "Emendamenti", FormMethod.Post, new {id = "formFiltraEM"}))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="page" value="@Model.Data.Paging.Page"/>
+                    <input type="hidden" name="size" value="@Model.Data.Paging.Limit"/>
+                    <div class="row" style="margin: 0 !important">
+                        <div class="col s12">
+                            <div class="form-group">
+                                <label>Cerca nel testo</label>
+                                <input type="text" id="filter_em_text1" name="filtro_text1" class="form-control" onchange="filter_em_text1_OnChange()"/>
+                            </div>
+                        </div>
+                    </div>
+                }
+                <div class="row" style="margin: 0 !important">
+                    <div class="col s12 center">
+                        <a class="chip hoverable blue center white-text" onclick="filtra()">
+                            <i class="icon material-icons">search</i> Filtra
+                        </a>
+                    </div>
+                </div>
+                
             </div>
         </li>
         <li>

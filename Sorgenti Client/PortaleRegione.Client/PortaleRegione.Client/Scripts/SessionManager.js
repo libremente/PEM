@@ -54,6 +54,8 @@ function set_ListaLegislature(obj) {
 ////////            FILTRI
 ////////
 /////////////////////////////////////////////////////////////
+
+//SEDUTE
 function get_Filtri_Sedute() {
     var session_raw = sessionStorage.getItem("Filtri_Sedute");
     if (session_raw == null)
@@ -63,4 +65,16 @@ function get_Filtri_Sedute() {
 
 function set_Filtri_Sedute(obj) {
     sessionStorage.setItem("Filtri_Sedute", JSON.stringify(obj));
+}
+
+//EM
+function get_Filtri_EM() {
+    var session_raw = sessionStorage.getItem("Filtri_EM");
+    if (session_raw == null)
+        return {}
+    return JSON.parse(session_raw);
+}
+
+function set_Filtri_EM(obj) {
+    sessionStorage.setItem("Filtri_EM", JSON.stringify(obj));
 }

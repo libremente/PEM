@@ -1,6 +1,9 @@
-﻿function Reset_Filtri() {
-    set_Filtri_Sedute({});
-}
+﻿
+/////////////////////////////////////////////////////////////
+////////
+////////            SEDUTE
+////////
+/////////////////////////////////////////////////////////////
 
 async function Filtri_Sedute_CaricaLegislature(ctrlSelect) {
     var filterSelect = 0;
@@ -125,4 +128,22 @@ function filter_sedute_da_OnChange() {
     var filtri_sedute = get_Filtri_Sedute();
     filtri_sedute.da = value;
     set_Filtri_Sedute(filtri_sedute);
+}
+
+/////////////////////////////////////////////////////////////
+////////
+////////            EMENDAMENTI
+////////
+/////////////////////////////////////////////////////////////
+
+async function Filtri_EM_CaricaText1(ctrlSelect) {
+    var filterSelect = 0;
+    var filtri = get_Filtri_EM();
+    if (filtri != null) {
+        filterSelect = filtri.text1;
+    }
+
+    var select = $("#" + ctrlSelect);
+    select.empty();
+    select.val(filterSelect);
 }

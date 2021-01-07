@@ -672,9 +672,13 @@ namespace PortaleRegione.Client.Controllers
             }
         }
 
-        public ActionResult NotificaEmendamento(Guid id)
+        #region ### FILTRI ###
+
+        public ActionResult Filtri_RiepilogoEM()
         {
             throw new NotImplementedException();
         }
+
+        #endregion
     }
 }

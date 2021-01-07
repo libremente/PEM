@@ -131,8 +131,17 @@
 {
     <script>
         $(document).ready(function() {
+            var filters = @Html.Raw(Convert.ToInt16(Model.Data.Filters.Any()));
+            if (filters == 0)
+                set_Filtri_EM({});
+
+            Filtri_EM_CaricaText1("filter_em_text1");
             checkSelectedEM();
         });
+
+        function filtra() {
+            $('#formFiltraEM').submit();
+        }
 
         $('#btnCreaEM').attr('href', '@Url.Action("NuovoEmendamento", new {id = Model.Atto.UIDAtto})');
 
