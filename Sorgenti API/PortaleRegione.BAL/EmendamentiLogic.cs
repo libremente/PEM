@@ -56,21 +56,6 @@ namespace PortaleRegione.BAL
 
         public bool BloccaDepositi { get; set; }
 
-        #region GetEM
-
-        public EM GetEM(Guid id)
-        {
-            return _unitOfWork.Emendamenti.Get(id);
-        }
-        
-        public EM GetEM(string id)
-        {
-            var guidId = new Guid(id);
-            return GetEM(guidId);
-        }
-
-        #endregion
-
         #region ModelloNuovoEM
 
         public async Task<EmendamentiFormModel> ModelloNuovoEM(ATTI atto, Guid? em_riferimentoUId, PersonaDto persona)
@@ -264,7 +249,7 @@ namespace PortaleRegione.BAL
             {
                 var progressivo =
                     _unitOfWork.Emendamenti.GetProgressivo(emendamentoDto.UIDAtto,
-                         persona.Gruppo.id_gruppo,
+                        persona.Gruppo.id_gruppo,
                         emendamentoDto.Rif_UIDEM.HasValue);
                 if (emendamentoDto.Rif_UIDEM.HasValue)
                     emendamentoDto.SubProgressivo = progressivo;
@@ -742,7 +727,7 @@ namespace PortaleRegione.BAL
                     }
 
                     //RITIRA FIRMA
-                    var firmeAttive = await _logicFirme.GetFirme(em, FirmeTipoEnum.ATTIVI);
+                    var firmeAttive = _logicFirme.GetFirme(em, FirmeTipoEnum.ATTIVI);
                     var firma_utente = firmeAttive.Single(f => f.UID_persona == persona.UID_persona);
 
                     _unitOfWork.Firme.Remove(firma_utente);
@@ -933,7 +918,7 @@ namespace PortaleRegione.BAL
                         if (AppSettingsConfiguration.AbilitaOpenData == "1")
                         {
                             var wsOD = new UpsertOpenData();
-                            var firme = await _logicFirme.GetFirme(em, FirmeTipoEnum.TUTTE);
+                            var firme = _logicFirme.GetFirme(em, FirmeTipoEnum.TUTTE);
                             var firmeDto = firme.Select(Mapper.Map<FIRME, FirmeDto>).ToList();
 
                             var resultOpenData = GetEM_OPENDATA(em,
@@ -957,6 +942,21 @@ namespace PortaleRegione.BAL
                 Log.Error("Logic - ModificaStatoEmendamento", e);
                 throw e;
             }
+        }
+
+        #endregion
+
+        #region GetEM
+
+        public EM GetEM(Guid id)
+        {
+            return _unitOfWork.Emendamenti.Get(id);
+        }
+
+        public EM GetEM(string id)
+        {
+            var guidId = new Guid(id);
+            return GetEM(guidId);
         }
 
         #endregion
@@ -998,6 +998,15 @@ namespace PortaleRegione.BAL
                 emendamentoDto.Firmato_Dal_Proponente = em.STATI_EM.IDStato >= (int) StatiEnum.Depositato
                     ? true
                     : _unitOfWork.Firme.CheckFirmato(em.UIDEM, em.UIDPersonaProponente.Value);
+                if (emendamentoDto.ConteggioFirme > 1)
+                {
+                    var firme = _logicFirme.GetFirme(emendamentoDto, FirmeTipoEnum.ATTIVI);
+                    emendamentoDto.Firme = firme
+                        .Where(f => f.UID_persona != emendamentoDto.UIDPersonaProponente)
+                        .Select(f => f.FirmaCert)
+                        .Aggregate((i, j) => i + "<br>" + j);
+                }
+
                 if (string.IsNullOrEmpty(em.DataDeposito))
                     emendamentoDto.Depositabile = _unitOfWork
                         .Emendamenti

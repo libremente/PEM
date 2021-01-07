@@ -26,7 +26,6 @@ using System.Threading.Tasks;
 using System.Web.Http;
 using AutoMapper;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using PortaleRegione.API.Helpers;
 using PortaleRegione.API.it.lombardia.regione.consiglio.intranet;
 using PortaleRegione.BAL;
@@ -34,9 +33,7 @@ using PortaleRegione.Contracts;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Autenticazione;
 using PortaleRegione.DTO.Domain;
-using PortaleRegione.DTO.Domain.Essentials;
 using PortaleRegione.DTO.Enum;
-using PortaleRegione.DTO.Model;
 using PortaleRegione.DTO.Response;
 using PortaleRegione.Logger;
 
@@ -49,6 +46,11 @@ namespace PortaleRegione.API.Controllers
     public class AutenticazioneController : BaseApiController
     {
         private readonly IUnitOfWork _unitOfWork;
+
+        public AutenticazioneController(PersoneLogic logicPersone, IUnitOfWork unitOfWork) : base(logicPersone)
+        {
+            _unitOfWork = unitOfWork;
+        }
 
         /// <summary>
         ///     Endpoint di login
@@ -163,7 +165,8 @@ namespace PortaleRegione.API.Controllers
 
                 var intranetAdService = new proxyAD();
                 var Gruppi_Utente = new List<string>(intranetAdService.GetGroups(
-                    SessionManager.Persona.userAD.Replace(@"CONSIGLIO\", ""), "PEM_", AppSettingsConfiguration.TOKEN_R));
+                    SessionManager.Persona.userAD.Replace(@"CONSIGLIO\", ""), "PEM_",
+                    AppSettingsConfiguration.TOKEN_R));
 
                 var lRuoli = Gruppi_Utente.Select(group => $"CONSIGLIO\\{group}").ToList();
 
@@ -214,7 +217,7 @@ namespace PortaleRegione.API.Controllers
                 persona.Gruppo = gruppoDto;
                 persona.CurrentRole = RuoliIntEnum.Responsabile_Segreteria_Politica;
                 var token = GetToken(persona);
-                
+
                 return Ok(new LoginResponse
                 {
                     jwt = token,
@@ -316,10 +319,5 @@ namespace PortaleRegione.API.Controllers
         }
 
         #endregion
-
-        public AutenticazioneController(PersoneLogic logicPersone, IUnitOfWork unitOfWork) : base(logicPersone)
-        {
-            _unitOfWork = unitOfWork;
-        }
     }
 }

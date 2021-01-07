@@ -311,7 +311,7 @@ namespace PortaleRegione.API.Controllers
                 if (em == null)
                     return NotFound();
 
-                var result = await _logicFirme.GetFirme(em, tipo);
+                var result = _logicFirme.GetFirme(em, tipo);
                 var resultDto = result.Select(Mapper.Map<FIRME, FirmeDto>);
 
                 return Ok(resultDto);
@@ -362,7 +362,7 @@ namespace PortaleRegione.API.Controllers
                     return NotFound();
 
                 var body = await _logicEm.GetBodyEM(em
-                    , await _logicFirme.GetFirme(em, FirmeTipoEnum.TUTTE)
+                    , _logicFirme.GetFirme(em, FirmeTipoEnum.TUTTE)
                     , SessionManager.Persona
                     , model.Template
                     , model.IsDeposito);
@@ -604,7 +604,7 @@ namespace PortaleRegione.API.Controllers
                 var em = _logicEm.GetEM(id);
                 if (em == null)
                     return NotFound();
-                var firmatari = await _logicFirme.GetFirme(em, FirmeTipoEnum.ATTIVI);
+                var firmatari = _logicFirme.GetFirme(em, FirmeTipoEnum.ATTIVI);
                 var firmatari_attivi = firmatari.Where(f => string.IsNullOrEmpty(f.Data_ritirofirma));
                 if (firmatari_attivi.Any())
                     return BadRequest("L'emendamento ha delle firme attive e non può essere eliminato");

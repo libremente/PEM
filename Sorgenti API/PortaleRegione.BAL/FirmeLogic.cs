@@ -19,9 +19,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using PortaleRegione.Contracts;
 using PortaleRegione.Domain;
+using PortaleRegione.DTO.Domain;
 using PortaleRegione.DTO.Enum;
 using PortaleRegione.Logger;
 
@@ -34,7 +34,13 @@ namespace PortaleRegione.BAL
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IEnumerable<FIRME>> GetFirme(EM em, FirmeTipoEnum tipo)
+        public IEnumerable<FIRME> GetFirme(EmendamentiDto emDto, FirmeTipoEnum tipo)
+        {
+            var em = _unitOfWork.Emendamenti.Get(emDto.UIDEM);
+            return GetFirme(em, tipo);
+        }
+
+        public IEnumerable<FIRME> GetFirme(EM em, FirmeTipoEnum tipo)
         {
             try
             {

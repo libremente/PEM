@@ -61,7 +61,7 @@ namespace PortaleRegione.Persistance
             }
             else
             {
-                query.Where(em => em.IDStato != (int) StatiEnum.Bozza_Riservata
+                query = query.Where(em => em.IDStato != (int) StatiEnum.Bozza_Riservata
                                   || em.IDStato == (int) StatiEnum.Bozza_Riservata
                                   && (em.UIDPersonaCreazione == persona.UID_persona
                                       || em.UIDPersonaProponente == persona.UID_persona));
@@ -130,7 +130,7 @@ namespace PortaleRegione.Persistance
             }
             else
             {
-                query.Where(em => em.IDStato != (int) StatiEnum.Bozza_Riservata
+                query = query.Where(em => em.IDStato != (int) StatiEnum.Bozza_Riservata
                                   || em.IDStato == (int) StatiEnum.Bozza_Riservata
                                   && (em.UIDPersonaCreazione == persona.UID_persona
                                       || em.UIDPersonaProponente == persona.UID_persona));

@@ -184,7 +184,7 @@ namespace PortaleRegione.BAL
 
                         if (!string.IsNullOrEmpty(em.DataDeposito))
                         {
-                            var firme = await _logicFirme.GetFirme(Mapper.Map<EmendamentiDto, EM>(em),
+                            var firme = _logicFirme.GetFirme(Mapper.Map<EmendamentiDto, EM>(em),
                                 FirmeTipoEnum.TUTTE);
                             var firmeDto = firme.Select(Mapper.Map<FIRME, FirmeDto>)
                                 .ToList();
@@ -373,7 +373,7 @@ namespace PortaleRegione.BAL
                         var headerCell4_Run_em = headerCell4_em.CreateRun();
                         headerCell4_Run_em.SetText(proponente.DisplayName);
 
-                        var firme = await _logicFirme.GetFirme(Mapper.Map<EmendamentiDto, EM>(em), FirmeTipoEnum.TUTTE);
+                        var firme = _logicFirme.GetFirme(Mapper.Map<EmendamentiDto, EM>(em), FirmeTipoEnum.TUTTE);
                         var firmeDto = firme.Select(Mapper.Map<FIRME, FirmeDto>).ToList();
 
                         var firmeAnte = firmeDto.Where(f =>

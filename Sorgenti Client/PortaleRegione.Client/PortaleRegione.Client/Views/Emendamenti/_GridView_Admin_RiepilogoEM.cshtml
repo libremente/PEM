@@ -139,6 +139,16 @@ else
                     </td>
                     <td>
                         @*firmatari*@
+                        @if (itemEM.Firmato_Dal_Proponente)
+                        {
+                            @($"{itemEM.PersonaProponente.DisplayName} ({itemEM.gruppi_politici.codice_gruppo})");
+
+                            if (itemEM.ConteggioFirme > 1)
+                            {
+                                <a class='tooltipped' data-position='left' data-tooltip='@itemEM.Firme'><i class='material-icons'>add</i></a>
+                            }
+                        }
+
                     </td>
                     <td>
                         @*COMANDI*@

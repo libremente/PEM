@@ -95,7 +95,7 @@ namespace PortaleRegione.API.Helpers
 
             var persona = _logicPersone.GetPersona(new Guid(uid_persona));
             persona.CurrentRole = (RuoliIntEnum) Convert.ToInt16(role);
-            persona = _logicPersone.GetPersona(persona.UID_persona, persona.IsGiunta());
+            persona.Gruppo = _logicPersone.GetGruppoAttualePersona(persona, persona.IsGiunta());
             var session = new SessionManager
             {
                 Persona = persona
