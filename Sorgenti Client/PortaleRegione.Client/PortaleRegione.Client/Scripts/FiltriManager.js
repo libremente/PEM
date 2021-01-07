@@ -147,3 +147,10 @@ async function Filtri_EM_CaricaText1(ctrlSelect) {
     select.empty();
     select.val(filterSelect);
 }
+
+function filter_em_text1_OnChange() {
+    var value = $("#filter_em_text1").val();
+    var filtri_em = get_Filtri_EM();
+    filtri_em.text1 = value;
+    set_Filtri_EM(filtri_em);
+}

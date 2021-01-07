@@ -998,13 +998,17 @@ namespace PortaleRegione.BAL
                 emendamentoDto.Firmato_Dal_Proponente = em.STATI_EM.IDStato >= (int) StatiEnum.Depositato
                     ? true
                     : _unitOfWork.Firme.CheckFirmato(em.UIDEM, em.UIDPersonaProponente.Value);
-                if (emendamentoDto.ConteggioFirme > 1)
+                if (persona.CurrentRole == RuoliIntEnum.Amministratore_PEM ||
+                    persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea)
                 {
-                    var firme = _logicFirme.GetFirme(emendamentoDto, FirmeTipoEnum.ATTIVI);
-                    emendamentoDto.Firme = firme
-                        .Where(f => f.UID_persona != emendamentoDto.UIDPersonaProponente)
-                        .Select(f => f.FirmaCert)
-                        .Aggregate((i, j) => i + "<br>" + j);
+                    if (emendamentoDto.ConteggioFirme > 1)
+                    {
+                        var firme = _logicFirme.GetFirme(emendamentoDto, FirmeTipoEnum.ATTIVI);
+                        emendamentoDto.Firme = firme
+                            .Where(f => f.UID_persona != emendamentoDto.UIDPersonaProponente)
+                            .Select(f => f.FirmaCert)
+                            .Aggregate((i, j) => i + "<br>" + j);
+                    }
                 }
 
                 if (string.IsNullOrEmpty(em.DataDeposito))

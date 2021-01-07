@@ -1,14 +1,38 @@
-﻿<div id="slide-out-DX" class="sidenav">
+﻿@using PortaleRegione.DTO.Enum
+<div id="slide-out-DX" class="sidenav">
     <ul class="collapsible">
         <li>
             <div class="collapsible-header"><i class="material-icons">search</i>Ricerca</div>
             <div class="collapsible-body">
+                @{
+                    var mode = HttpUtility.ParseQueryString(Request.Url.Query).Get("mode");
+                    var ordineFromCache = HttpContext.Current.Cache.Get("OrdinamentoEM");
+
+                    var ordinePagina = HttpUtility.ParseQueryString(Request.Url.Query).Get("ordine");
+                    OrdinamentoEnum ordinePaginaEnum;
+                    if (!string.IsNullOrEmpty(ordinePagina))
+                    {
+                        ordinePaginaEnum = (OrdinamentoEnum) Convert.ToInt16(ordinePagina);
+                    }
+                    else if (ordineFromCache != null)
+                    {
+                        ordinePaginaEnum = (OrdinamentoEnum) ordineFromCache;
+                    }
+                    else
+                    {
+                        ordinePaginaEnum = OrdinamentoEnum.Presentazione;
+                    }
+                }
+
                 @using (Html.BeginForm("Filtri_RiepilogoEM", "Emendamenti", FormMethod.Post, new {id = "formFiltraEM"}))
                 {
                     @Html.AntiForgeryToken()
 
                     <input type="hidden" name="page" value="@Model.Data.Paging.Page"/>
                     <input type="hidden" name="size" value="@Model.Data.Paging.Limit"/>
+                    <input type="hidden" name="mode" value="@mode"/>
+                    <input type="hidden" name="ordine" value="@((int)ordinePaginaEnum)"/>
+                    <input type="hidden" name="atto" value="@Model.Atto.UIDAtto"/>
                     <div class="row" style="margin: 0 !important">
                         <div class="col s12">
                             <div class="form-group">
@@ -25,7 +49,7 @@
                         </a>
                     </div>
                 </div>
-                
+
             </div>
         </li>
         <li>

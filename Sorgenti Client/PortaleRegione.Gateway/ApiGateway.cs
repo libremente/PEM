@@ -710,6 +710,29 @@ namespace PortaleRegione.Gateway
                 throw ex;
             }
         }
+        
+        public static async Task<BaseResponse<EmendamentiDto>> GetEmendamenti(BaseRequest<EmendamentiDto> model)
+        {
+            try
+            {
+                var requestUrl = $"{apiUrl}/emendamenti/view";
+                var body = JsonConvert.SerializeObject(model);
+
+                var lst = JsonConvert.DeserializeObject<BaseResponse<EmendamentiDto>>(await Post(requestUrl, body));
+
+                return lst;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Log.Error("GetEmendamenti", ex);
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("GetEmendamenti", ex);
+                throw ex;
+            }
+        }
 
         #endregion
 

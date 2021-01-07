@@ -22,9 +22,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Caching;
 using System.Web.Mvc;
+using ExpressionBuilder.Common;
+using ExpressionBuilder.Generics;
 using Newtonsoft.Json;
 using PortaleRegione.Client.Helpers;
 using PortaleRegione.Client.Models;
+using PortaleRegione.DTO.Domain;
 using PortaleRegione.DTO.Enum;
 using PortaleRegione.DTO.Model;
 using PortaleRegione.DTO.Request;
@@ -69,6 +72,18 @@ namespace PortaleRegione.Client.Controllers
                 CurrentUser = CurrentUser,
                 Mode = mode
             };
+
+            if (HttpContext.User.IsInRole(RuoliEnum.Amministratore_PEM) ||
+                HttpContext.User.IsInRole(RuoliEnum.Segreteria_Assemblea))
+            {
+                foreach (var emendamentiDto in model.Data.Results)
+                {
+                    emendamentiDto.BodyEM = await ApiGateway.GetBodyEM(emendamentiDto.UIDEM, TemplateTypeEnum.PDF);
+                }
+
+                return View("RiepilogoEM_Admin", model);
+            }
+
             foreach (var emendamentiDto in model.Data.Results)
             {
                 if (emendamentiDto.STATI_EM.IDStato <= (int) StatiEnum.Depositato)
@@ -81,13 +96,7 @@ namespace PortaleRegione.Client.Controllers
                     emendamentiDto.Destinatari =
                         await Utility.GetDestinatariNotifica(await ApiGateway.GetInvitati(emendamentiDto.UIDEM));
                 }
-
-                emendamentiDto.BodyEM = await ApiGateway.GetBodyEM(emendamentiDto.UIDEM, TemplateTypeEnum.PDF);
             }
-
-            if (HttpContext.User.IsInRole(RuoliEnum.Amministratore_PEM) ||
-                HttpContext.User.IsInRole(RuoliEnum.Segreteria_Assemblea))
-                return View("RiepilogoEM_Admin", model);
 
             return View("RiepilogoEM", model);
         }
@@ -674,9 +683,72 @@ namespace PortaleRegione.Client.Controllers
 
         #region ### FILTRI ###
 
-        public ActionResult Filtri_RiepilogoEM()
+        [HttpPost]
+        [Route("filtra")]
+        public async Task<ActionResult> Filtri_RiepilogoEM()
         {
-            throw new NotImplementedException();
+            int.TryParse(Request.Form["page"], out var filtro_page);
+            int.TryParse(Request.Form["size"], out var filtro_size);
+            int.TryParse(Request.Form["mode"], out var mode);
+            int.TryParse(Request.Form["ordine"], out var ordine);
+            var atto = Request.Form["atto"];
+
+            var filtro_text1 = Request.Form["filtro_text1"];
+
+            var model = new BaseRequest<EmendamentiDto>
+            {
+                page = filtro_page,
+                size = filtro_size
+            };
+
+            if (!string.IsNullOrEmpty(filtro_text1))
+                model.filtro.Add(new FilterStatement<EmendamentiDto>
+                {
+                    PropertyId = nameof(EmendamentiDto.TestoEM_originale),
+                    Operation = Operation.Contains,
+                    Value = filtro_text1
+                });
+
+            if (!model.filtro.Any())
+                return RedirectToAction("RiepilogoEmendamenti", "Emendamenti", new {id = atto, mode, ordine});
+
+            model.param = new Dictionary<string, object> {{"CLIENT_MODE", mode}};
+            model.ordine = (OrdinamentoEnum)ordine;
+            model.id = new Guid(atto);
+            var modelResult = new EmendamentiViewModel
+            {
+                Atto = await ApiGateway.GetAtto(model.id),
+                Data = await ApiGateway.GetEmendamenti(model),
+                CurrentUser = CurrentUser,
+                Mode = (ClientModeEnum)mode
+            };
+
+            if (HttpContext.User.IsInRole(RuoliEnum.Amministratore_PEM) ||
+                HttpContext.User.IsInRole(RuoliEnum.Segreteria_Assemblea))
+            {
+                foreach (var emendamentiDto in modelResult.Data.Results)
+                {
+                    emendamentiDto.BodyEM = await ApiGateway.GetBodyEM(emendamentiDto.UIDEM, TemplateTypeEnum.PDF);
+                }
+
+                return View("RiepilogoEM_Admin", modelResult);
+            }
+
+            foreach (var emendamentiDto in modelResult.Data.Results)
+            {
+                if (emendamentiDto.STATI_EM.IDStato <= (int) StatiEnum.Depositato)
+                {
+                    if (emendamentiDto.ConteggioFirme > 0)
+                        emendamentiDto.Firmatari = await Utility.GetFirmatariEM(
+                            await ApiGateway.GetFirmatari(emendamentiDto.UIDEM, FirmeTipoEnum.TUTTE),
+                            CurrentUser.UID_persona, FirmeTipoEnum.TUTTE, true);
+
+                    emendamentiDto.Destinatari =
+                        await Utility.GetDestinatariNotifica(await ApiGateway.GetInvitati(emendamentiDto.UIDEM));
+                }
+            }
+
+            return View("RiepilogoEM", modelResult);
         }
 
         #endregion
