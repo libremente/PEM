@@ -372,6 +372,17 @@ namespace PortaleRegione.Persistance
             return PRContext.TITOLI_MISSIONI.ToList();
         }
 
+        /// <summary>
+        /// Ritorna tutti i valori disponibili per gli stati in tabella
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<STATI_EM> GetStatiEmendamento()
+        {
+            return PRContext
+                .STATI_EM
+                .ToList();
+        }
+
         #endregion
 
         #region CHECK

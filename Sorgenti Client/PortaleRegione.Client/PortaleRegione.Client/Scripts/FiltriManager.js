@@ -143,14 +143,105 @@ async function Filtri_EM_CaricaText1(ctrlSelect) {
         filterSelect = filtri.text1;
     }
 
+    var legislature = await GetLegislature();
+    if (legislature.length > 0) {
+        var select = $("#" + ctrlSelect);
+        select.empty();
+        select.append('<option value="0">Seleziona</option>');
+
+        $.each(legislature,
+            function(index, item) {
+                var template = "";
+                if (item.id_legislatura == filterSelect)
+                    template = "<option selected='selected'></option>";
+                else
+                    template = "<option></option>";
+                select.append($(template).val(item.id_legislatura).html(item.num_legislatura));
+            });
+
+        var elems = document.querySelectorAll("#" + ctrlSelect);
+        M.FormSelect.init(elems, null);
+    }
+}
+
+async function Filtri_EM_CaricaNumeroEM(ctrlSelect) {
+    var filterSelect = 0;
+    var filtri = get_Filtri_EM();
+    if (filtri != null) {
+        filterSelect = filtri.n_em;
+    }
+
     var select = $("#" + ctrlSelect);
     select.empty();
     select.val(filterSelect);
+}
+
+async function Filtri_EM_CaricaStatiEM(ctrlSelect) {
+    var filterSelect = 0;
+    var filtri = get_Filtri_EM();
+    if (filtri != null) {
+        filterSelect = filtri.stato;
+    }
+
+    var stati = await GetStatiEM();
+    if (stati.length > 0) {
+        var select = $("#" + ctrlSelect);
+        select.empty();
+        select.append('<option value="0">Seleziona</option>');
+        console.log(stati)
+        $.each(stati,
+            function(index, item) {
+                var template = "";
+                if (item.IDStato == filterSelect)
+                    template = "<option selected='selected'></option>";
+                else
+                    template = "<option></option>";
+                select.append($(template).val(item.IDStato).html(item.Stato));
+            });
+
+        var elems = document.querySelectorAll("#" + ctrlSelect);
+        M.FormSelect.init(elems, null);
+    }
+}
+
+
+function GetStatiEM() {
+    var stati = get_ListaStatiEM();
+    if (stati.length > 0) {
+        return stati;
+    }
+
+    return new Promise(async function(resolve, reject) {
+        $.ajax({
+            url: baseUrl + "/emendamenti/stati-em",
+            type: "GET"
+        }).done(function(result) {
+            set_ListaStatiEM(result);
+            resolve(result);
+        }).fail(function(err) {
+            console.log("error", err);
+            ErrorAlert(err.message);
+        });
+    });
 }
 
 function filter_em_text1_OnChange() {
     var value = $("#filter_em_text1").val();
     var filtri_em = get_Filtri_EM();
     filtri_em.text1 = value;
+    set_Filtri_EM(filtri_em);
+}
+
+function filter_em_n_em_OnChange() {
+    var value = $("#filter_em_n_em").val();
+    var filtri_em = get_Filtri_EM();
+    filtri_em.n_em = value;
+    set_Filtri_EM(filtri_em);
+}
+
+function filter_em_stato_OnChange() {
+    var value = $("#filter_em_stato").val();
+    var filtri_em = get_Filtri_EM();
+    filtri_em.stato = value;
     set_Filtri_EM(filtri_em);
 }

@@ -136,7 +136,7 @@ namespace PortaleRegione.Domain
 
         public string NOTE_Griglia { get; set; }
 
-        public int? IDStato { get; set; }
+        public int IDStato { get; set; }
 
         public bool Firma_su_invito { get; set; }
 

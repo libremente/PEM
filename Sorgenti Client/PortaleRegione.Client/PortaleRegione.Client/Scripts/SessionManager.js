@@ -49,6 +49,17 @@ function set_ListaLegislature(obj) {
     sessionStorage.setItem("ListaLegislature", JSON.stringify(obj));
 }
 
+function get_ListaStatiEM() {
+    var session_raw = sessionStorage.getItem("ListaStatiEM");
+    if (session_raw == null)
+        return {}
+    return JSON.parse(session_raw);
+}
+
+function set_ListaStatiEM(obj) {
+    sessionStorage.setItem("ListaStatiEM", JSON.stringify(obj));
+}
+
 /////////////////////////////////////////////////////////////
 ////////
 ////////            FILTRI

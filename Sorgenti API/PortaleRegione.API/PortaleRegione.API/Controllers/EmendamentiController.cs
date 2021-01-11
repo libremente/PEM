@@ -886,5 +886,99 @@ namespace PortaleRegione.API.Controllers
         }
 
         #endregion
+
+        #region ### FILTRI ###
+
+        /// <summary>
+        ///     Endpoint per avere le parti emendabili a DB
+        /// </summary>
+        /// <returns></returns>
+        [Route("parti-em")]
+        public async Task<IHttpActionResult> GetPartiEM()
+        {
+            try
+            {
+                return Ok(_logicEm.GetPartiEM());
+            }
+            catch (Exception e)
+            {
+                Log.Error("GetPartiEM", e);
+                return ErrorHandler(e);
+            }
+        }
+        
+        /// <summary>
+        ///     Endpoint per avere i tipi di emendmento
+        /// </summary>
+        /// <returns></returns>
+        [Route("tipi-em")]
+        public async Task<IHttpActionResult> GetTipiEM()
+        {
+            try
+            {
+                return Ok(_logicEm.GetTipiEM());
+            }
+            catch (Exception e)
+            {
+                Log.Error("GetTipiEM", e);
+                return ErrorHandler(e);
+            }
+        }
+        
+        /// <summary>
+        ///     Endpoint per avere le missioni
+        /// </summary>
+        /// <returns></returns>
+        [Route("missioni-em")]
+        public async Task<IHttpActionResult> GetMissioniEM()
+        {
+            try
+            {
+                return Ok(_logicEm.GetMissioni());
+            }
+            catch (Exception e)
+            {
+                Log.Error("GetMissioni", e);
+                return ErrorHandler(e);
+            }
+        }
+        
+        /// <summary>
+        ///     Endpoint per avere i titoli / missione
+        /// </summary>
+        /// <returns></returns>
+        [Route("titoli-missioni-em")]
+        public async Task<IHttpActionResult> GetTitoliMissioni()
+        {
+            try
+            {
+                return Ok(_logicEm.GetTitoliMissioni());
+            }
+            catch (Exception e)
+            {
+                Log.Error("GetTitoliMissioni", e);
+                return ErrorHandler(e);
+            }
+        }
+        
+        /// <summary>
+        ///     Endpoint per avere gli stati
+        /// </summary>
+        /// <returns></returns>
+        [Route("stati-em")]
+        public async Task<IHttpActionResult> GetStatiEM()
+        {
+            try
+            {
+                return Ok(_logicEm.GetStatiEM());
+            }
+            catch (Exception e)
+            {
+                Log.Error("GetStatiEM", e);
+                return ErrorHandler(e);
+            }
+        }
+
+        #endregion
     }
 }

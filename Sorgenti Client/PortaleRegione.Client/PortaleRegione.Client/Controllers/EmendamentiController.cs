@@ -77,15 +77,12 @@ namespace PortaleRegione.Client.Controllers
                 HttpContext.User.IsInRole(RuoliEnum.Segreteria_Assemblea))
             {
                 foreach (var emendamentiDto in model.Data.Results)
-                {
                     emendamentiDto.BodyEM = await ApiGateway.GetBodyEM(emendamentiDto.UIDEM, TemplateTypeEnum.PDF);
-                }
 
                 return View("RiepilogoEM_Admin", model);
             }
 
             foreach (var emendamentiDto in model.Data.Results)
-            {
                 if (emendamentiDto.STATI_EM.IDStato <= (int) StatiEnum.Depositato)
                 {
                     if (emendamentiDto.ConteggioFirme > 0)
@@ -96,7 +93,6 @@ namespace PortaleRegione.Client.Controllers
                     emendamentiDto.Destinatari =
                         await Utility.GetDestinatariNotifica(await ApiGateway.GetInvitati(emendamentiDto.UIDEM));
                 }
-            }
 
             return View("RiepilogoEM", model);
         }
@@ -683,6 +679,13 @@ namespace PortaleRegione.Client.Controllers
 
         #region ### FILTRI ###
 
+        [HttpGet]
+        [Route("stati-em")]
+        public async Task<ActionResult> Filtri_GetStatiEM()
+        {
+            return Json(await ApiGateway.GetStatiEM(), JsonRequestBehavior.AllowGet);
+        }
+
         [HttpPost]
         [Route("filtra")]
         public async Task<ActionResult> Filtri_RiepilogoEM()
@@ -694,6 +697,9 @@ namespace PortaleRegione.Client.Controllers
             var atto = Request.Form["atto"];
 
             var filtro_text1 = Request.Form["filtro_text1"];
+            var filtro_n_em = Request.Form["filtro_n_em"];
+            var filtro_stato = Request.Form["filtro_stato"];
+
 
             var model = new BaseRequest<EmendamentiDto>
             {
@@ -709,33 +715,46 @@ namespace PortaleRegione.Client.Controllers
                     Value = filtro_text1
                 });
 
+            if (!string.IsNullOrEmpty(filtro_n_em))
+                model.filtro.Add(new FilterStatement<EmendamentiDto>
+                {
+                    PropertyId = nameof(EmendamentiDto.N_EM),
+                    Operation = Operation.EqualTo,
+                    Value = filtro_n_em
+                });
+            
+            if (!string.IsNullOrEmpty(filtro_stato))
+                model.filtro.Add(new FilterStatement<EmendamentiDto>
+                {
+                    PropertyId = nameof(EmendamentiDto.IDStato),
+                    Operation = Operation.EqualTo,
+                    Value = filtro_stato
+                });
+
             if (!model.filtro.Any())
                 return RedirectToAction("RiepilogoEmendamenti", "Emendamenti", new {id = atto, mode, ordine});
 
             model.param = new Dictionary<string, object> {{"CLIENT_MODE", mode}};
-            model.ordine = (OrdinamentoEnum)ordine;
+            model.ordine = (OrdinamentoEnum) ordine;
             model.id = new Guid(atto);
             var modelResult = new EmendamentiViewModel
             {
                 Atto = await ApiGateway.GetAtto(model.id),
                 Data = await ApiGateway.GetEmendamenti(model),
                 CurrentUser = CurrentUser,
-                Mode = (ClientModeEnum)mode
+                Mode = (ClientModeEnum) mode
             };
 
             if (HttpContext.User.IsInRole(RuoliEnum.Amministratore_PEM) ||
                 HttpContext.User.IsInRole(RuoliEnum.Segreteria_Assemblea))
             {
                 foreach (var emendamentiDto in modelResult.Data.Results)
-                {
                     emendamentiDto.BodyEM = await ApiGateway.GetBodyEM(emendamentiDto.UIDEM, TemplateTypeEnum.PDF);
-                }
 
                 return View("RiepilogoEM_Admin", modelResult);
             }
 
             foreach (var emendamentiDto in modelResult.Data.Results)
-            {
                 if (emendamentiDto.STATI_EM.IDStato <= (int) StatiEnum.Depositato)
                 {
                     if (emendamentiDto.ConteggioFirme > 0)
@@ -746,7 +765,6 @@ namespace PortaleRegione.Client.Controllers
                     emendamentiDto.Destinatari =
                         await Utility.GetDestinatariNotifica(await ApiGateway.GetInvitati(emendamentiDto.UIDEM));
                 }
-            }
 
             return View("RiepilogoEM", modelResult);
         }

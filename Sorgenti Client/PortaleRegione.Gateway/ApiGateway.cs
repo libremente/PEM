@@ -1426,6 +1426,36 @@ namespace PortaleRegione.Gateway
 
         #endregion
 
+        #region --- FILTRI ---
+
+        #region GetStatiEM
+
+        public static async Task<IEnumerable<StatiDto>> GetStatiEM()
+        {
+            try
+            {
+                var requestUrl = $"{apiUrl}/emendamenti/stati-em";
+
+                var lst = JsonConvert.DeserializeObject<IEnumerable<StatiDto>>(await Get(requestUrl));
+                return lst;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Log.Error("GetStatiEM", ex);
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("GetStatiEM", ex);
+                throw ex;
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+
         #endregion
 
         #region ### SEDUTE ###

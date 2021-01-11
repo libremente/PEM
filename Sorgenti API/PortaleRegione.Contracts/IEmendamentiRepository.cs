@@ -54,6 +54,7 @@ namespace PortaleRegione.Contracts
         IEnumerable<TIPI_EM> GetTipiEmendamento();
         IEnumerable<MISSIONI> GetMissioniEmendamento();
         IEnumerable<TITOLI_MISSIONI> GetTitoliMissioneEmendamento();
+        IEnumerable<STATI_EM> GetStatiEmendamento();
 
         #endregion
 

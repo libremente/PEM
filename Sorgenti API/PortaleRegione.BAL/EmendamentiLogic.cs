@@ -133,37 +133,17 @@ namespace PortaleRegione.BAL
                 emendamento.UIDPersonaCreazione = persona.UID_persona;
                 emendamento.DataCreazione = DateTime.Now;
                 emendamento.idRuoloCreazione = (int) persona.CurrentRole;
-                //if (isGiunta)
-                //    emendamento.id_gruppo = AppSettingsConfiguration.GIUNTA_REGIONALE_ID;
-                //else if (persona.CurrentRole != RuoliIntEnum.Amministratore_PEM
-                //         && persona.CurrentRole != RuoliIntEnum.Segreteria_Assemblea)
-                //    emendamento.id_gruppo = persona.Gruppo.id_gruppo;
                 if (persona.CurrentRole != RuoliIntEnum.Amministratore_PEM
                     && persona.CurrentRole != RuoliIntEnum.Segreteria_Assemblea)
                     emendamento.id_gruppo = persona.Gruppo.id_gruppo;
                 emendamento.UIDAtto = atto.UIDAtto;
                 emendamento.ATTI = Mapper.Map<ATTI, AttiDto>(atto);
 
-                result.ListaPartiEmendabili = _unitOfWork
-                    .Emendamenti
-                    .GetPartiEmendabili()
-                    .Select(Mapper.Map<PARTI_TESTO, PartiTestoDto>);
-                result.ListaTipiEmendamento = _unitOfWork
-                    .Emendamenti
-                    .GetTipiEmendamento()
-                    .Select(Mapper.Map<TIPI_EM, Tipi_EmendamentiDto>);
-                result.ListaMissioni = _unitOfWork
-                    .Emendamenti
-                    .GetMissioniEmendamento()
-                    .Select(Mapper.Map<MISSIONI, MissioniDto>);
-                result.ListaTitoli_Missioni = _unitOfWork
-                    .Emendamenti
-                    .GetTitoliMissioneEmendamento()
-                    .Select(Mapper.Map<TITOLI_MISSIONI, TitoloMissioniDto>);
-                result.ListaArticoli = _unitOfWork
-                    .Articoli
-                    .GetArticoli(atto.UIDAtto)
-                    .Select(Mapper.Map<ARTICOLI, ArticoliDto>);
+                result.ListaPartiEmendabili = GetPartiEM();
+                result.ListaTipiEmendamento = GetTipiEM();
+                result.ListaMissioni = GetMissioni();
+                result.ListaTitoli_Missioni = GetTitoliMissioni();
+                result.ListaArticoli = GetArticoli(atto.UIDAtto);
 
                 result.Emendamento = emendamento;
 
@@ -946,6 +926,100 @@ namespace PortaleRegione.BAL
 
         #endregion
 
+        #region GetPartiEM
+
+        /// <summary>
+        ///     Ritorna la lista delle parti testo emendabili
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<PartiTestoDto> GetPartiEM()
+        {
+            return _unitOfWork.Emendamenti.GetPartiEmendabili().Select(Mapper.Map<PARTI_TESTO, PartiTestoDto>);
+        }
+
+        #endregion
+
+        #region GetTipiEM
+
+        /// <summary>
+        ///     Ritorna la lista dei tipi di emendamento disponibili
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<Tipi_EmendamentiDto> GetTipiEM()
+        {
+            return _unitOfWork
+                .Emendamenti
+                .GetTipiEmendamento()
+                .Select(Mapper.Map<TIPI_EM, Tipi_EmendamentiDto>);
+        }
+
+        #endregion
+
+        #region GetMissioni
+
+        /// <summary>
+        ///     Ritorna la lista delle missioni nel db
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<MissioniDto> GetMissioni()
+        {
+            return _unitOfWork
+                .Emendamenti
+                .GetMissioniEmendamento()
+                .Select(Mapper.Map<MISSIONI, MissioniDto>);
+        }
+
+        #endregion
+
+        #region GetTitoliMissioni
+
+        /// <summary>
+        ///     Ritorna la lista dei titoli missioni nel db
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<TitoloMissioniDto> GetTitoliMissioni()
+        {
+            return _unitOfWork
+                .Emendamenti
+                .GetTitoliMissioneEmendamento()
+                .Select(Mapper.Map<TITOLI_MISSIONI, TitoloMissioniDto>);
+        }
+
+        #endregion
+
+        #region GetStatiEM
+
+        /// <summary>
+        ///     Ritorna la lista degli stati disponibili nel db
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<StatiDto> GetStatiEM()
+        {
+            return _unitOfWork
+                .Emendamenti
+                .GetStatiEmendamento()
+                .Select(Mapper.Map<STATI_EM, StatiDto>);
+        }
+
+        #endregion
+
+        #region GetArticoli
+
+        /// <summary>
+        ///     Ritorna la lista degli articoli emendabili disponibili per l'atto selezionato
+        /// </summary>
+        /// <param name="atto"></param>
+        /// <returns></returns>
+        public IEnumerable<ArticoliDto> GetArticoli(Guid atto)
+        {
+            return _unitOfWork
+                .Articoli
+                .GetArticoli(atto)
+                .Select(Mapper.Map<ARTICOLI, ArticoliDto>);
+        }
+
+        #endregion
+
         #region GetEM
 
         public EM GetEM(Guid id)
@@ -1000,7 +1074,6 @@ namespace PortaleRegione.BAL
                     : _unitOfWork.Firme.CheckFirmato(em.UIDEM, em.UIDPersonaProponente.Value);
                 if (persona.CurrentRole == RuoliIntEnum.Amministratore_PEM ||
                     persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea)
-                {
                     if (emendamentoDto.ConteggioFirme > 1)
                     {
                         var firme = _logicFirme.GetFirme(emendamentoDto, FirmeTipoEnum.ATTIVI);
@@ -1009,7 +1082,6 @@ namespace PortaleRegione.BAL
                             .Select(f => f.FirmaCert)
                             .Aggregate((i, j) => i + "<br>" + j);
                     }
-                }
 
                 if (string.IsNullOrEmpty(em.DataDeposito))
                     emendamentoDto.Depositabile = _unitOfWork
@@ -1078,6 +1150,10 @@ namespace PortaleRegione.BAL
             try
             {
                 var queryFilter = new Filter<EM>();
+                foreach (var filterStatement in model.filtro.Where(filterStatement =>
+                    filterStatement.PropertyId == nameof(EmendamentiDto.N_EM)))
+                    filterStatement.Value =
+                        EncryptString(filterStatement.Value.ToString(), AppSettingsConfiguration.masterKey);
                 queryFilter.ImportStatements(model.filtro);
 
                 var emendamentiDtos = _unitOfWork
