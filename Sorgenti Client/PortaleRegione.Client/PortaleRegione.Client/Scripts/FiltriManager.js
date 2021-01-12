@@ -143,25 +143,9 @@ async function Filtri_EM_CaricaText1(ctrlSelect) {
         filterSelect = filtri.text1;
     }
 
-    var legislature = await GetLegislature();
-    if (legislature.length > 0) {
-        var select = $("#" + ctrlSelect);
-        select.empty();
-        select.append('<option value="0">Seleziona</option>');
-
-        $.each(legislature,
-            function(index, item) {
-                var template = "";
-                if (item.id_legislatura == filterSelect)
-                    template = "<option selected='selected'></option>";
-                else
-                    template = "<option></option>";
-                select.append($(template).val(item.id_legislatura).html(item.num_legislatura));
-            });
-
-        var elems = document.querySelectorAll("#" + ctrlSelect);
-        M.FormSelect.init(elems, null);
-    }
+    var select = $("#" + ctrlSelect);
+    select.empty();
+    select.val(filterSelect);
 }
 
 async function Filtri_EM_CaricaNumeroEM(ctrlSelect) {
@@ -187,8 +171,7 @@ async function Filtri_EM_CaricaStatiEM(ctrlSelect) {
     if (stati.length > 0) {
         var select = $("#" + ctrlSelect);
         select.empty();
-        select.append('<option value="0">Seleziona</option>');
-        console.log(stati)
+        select.append('<option value="-10">Seleziona</option>');
         $.each(stati,
             function(index, item) {
                 var template = "";
@@ -204,7 +187,6 @@ async function Filtri_EM_CaricaStatiEM(ctrlSelect) {
     }
 }
 
-
 function GetStatiEM() {
     var stati = get_ListaStatiEM();
     if (stati.length > 0) {
@@ -217,6 +199,102 @@ function GetStatiEM() {
             type: "GET"
         }).done(function(result) {
             set_ListaStatiEM(result);
+            resolve(result);
+        }).fail(function(err) {
+            console.log("error", err);
+            ErrorAlert(err.message);
+        });
+    });
+}
+
+async function Filtri_EM_CaricaTipiEM(ctrlSelect) {
+    var filterSelect = 0;
+    var filtri = get_Filtri_EM();
+    if (filtri != null) {
+        filterSelect = filtri.tipo;
+    }
+
+    var tipi = await GetTipiEM();
+    if (tipi.length > 0) {
+        var select = $("#" + ctrlSelect);
+        select.empty();
+        select.append('<option value="-10">Seleziona</option>');
+
+        $.each(tipi,
+            function(index, item) {
+                var template = "";
+                if (item.IDTipo_EM == filterSelect)
+                    template = "<option selected='selected'></option>";
+                else
+                    template = "<option></option>";
+                select.append($(template).val(item.IDTipo_EM).html(item.Tipo_EM));
+            });
+
+        var elems = document.querySelectorAll("#" + ctrlSelect);
+        M.FormSelect.init(elems, null);
+    }
+}
+
+function GetTipiEM() {
+    var tipi = get_ListaTipiEM();
+    if (tipi.length > 0) {
+        return tipi;
+    }
+
+    return new Promise(async function(resolve, reject) {
+        $.ajax({
+            url: baseUrl + "/emendamenti/tipi-em",
+            type: "GET"
+        }).done(function(result) {
+            set_ListaTipiEM(result);
+            resolve(result);
+        }).fail(function(err) {
+            console.log("error", err);
+            ErrorAlert(err.message);
+        });
+    });
+}
+
+async function Filtri_EM_CaricaPartiEM(ctrlSelect) {
+    var filterSelect = 0;
+    var filtri = get_Filtri_EM();
+    if (filtri != null) {
+        filterSelect = filtri.parte;
+    }
+
+    var parti = await GetPartiEM();
+    if (parti.length > 0) {
+        var select = $("#" + ctrlSelect);
+        select.empty();
+        select.append('<option value="-10">Seleziona</option>');
+
+        $.each(parti,
+            function(index, item) {
+                var template = "";
+                if (item.IDParte == filterSelect)
+                    template = "<option selected='selected'></option>";
+                else
+                    template = "<option></option>";
+                select.append($(template).val(item.IDParte).html(item.Parte));
+            });
+
+        var elems = document.querySelectorAll("#" + ctrlSelect);
+        M.FormSelect.init(elems, null);
+    }
+}
+
+function GetPartiEM() {
+    var parti = get_ListaPartiEM();
+    if (parti.length > 0) {
+        return parti;
+    }
+
+    return new Promise(async function(resolve, reject) {
+        $.ajax({
+            url: baseUrl + "/emendamenti/parti-em",
+            type: "GET"
+        }).done(function(result) {
+            set_ListaPartiEM(result);
             resolve(result);
         }).fail(function(err) {
             console.log("error", err);
@@ -243,5 +321,19 @@ function filter_em_stato_OnChange() {
     var value = $("#filter_em_stato").val();
     var filtri_em = get_Filtri_EM();
     filtri_em.stato = value;
+    set_Filtri_EM(filtri_em);
+}
+
+function filter_em_tipo_OnChange() {
+    var value = $("#filter_em_tipo").val();
+    var filtri_em = get_Filtri_EM();
+    filtri_em.tipo = value;
+    set_Filtri_EM(filtri_em);
+}
+
+function filter_em_parte_OnChange() {
+    var value = $("#filter_em_parte").val();
+    var filtri_em = get_Filtri_EM();
+    filtri_em.parte = value;
     set_Filtri_EM(filtri_em);
 }

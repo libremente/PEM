@@ -1453,8 +1453,57 @@ namespace PortaleRegione.Gateway
 
         #endregion
 
+        #region GetPartiEM
+
+        public static async Task<IEnumerable<PartiTestoDto>> GetPartiEM()
+        {
+            try
+            {
+                var requestUrl = $"{apiUrl}/emendamenti/parti-em";
+
+                var lst = JsonConvert.DeserializeObject<IEnumerable<PartiTestoDto>>(await Get(requestUrl));
+                return lst;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Log.Error("GetPartiEM", ex);
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("GetPartiEM", ex);
+                throw ex;
+            }
+        }
+
+        #endregion
+        
+        #region GetTipiEM
+
+        public static async Task<IEnumerable<Tipi_EmendamentiDto>> GetTipiEM()
+        {
+            try
+            {
+                var requestUrl = $"{apiUrl}/emendamenti/tipi-em";
+
+                var lst = JsonConvert.DeserializeObject<IEnumerable<Tipi_EmendamentiDto>>(await Get(requestUrl));
+                return lst;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Log.Error("GetTipiEM", ex);
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("GetTipiEM", ex);
+                throw ex;
+            }
+        }
+
         #endregion
 
+        #endregion
 
         #endregion
 

@@ -139,8 +139,8 @@ namespace PortaleRegione.BAL
                 emendamento.UIDAtto = atto.UIDAtto;
                 emendamento.ATTI = Mapper.Map<ATTI, AttiDto>(atto);
 
-                result.ListaPartiEmendabili = GetPartiEM();
-                result.ListaTipiEmendamento = GetTipiEM();
+                result.ListaPartiEmendabili = await GetPartiEM();
+                result.ListaTipiEmendamento = await GetTipiEM();
                 result.ListaMissioni = GetMissioni();
                 result.ListaTitoli_Missioni = GetTitoliMissioni();
                 result.ListaArticoli = GetArticoli(atto.UIDAtto);
@@ -189,14 +189,8 @@ namespace PortaleRegione.BAL
                     }
                 }
 
-                result.ListaPartiEmendabili = _unitOfWork
-                    .Emendamenti
-                    .GetPartiEmendabili()
-                    .Select(Mapper.Map<PARTI_TESTO, PartiTestoDto>);
-                result.ListaTipiEmendamento = _unitOfWork
-                    .Emendamenti
-                    .GetTipiEmendamento()
-                    .Select(Mapper.Map<TIPI_EM, Tipi_EmendamentiDto>);
+                result.ListaPartiEmendabili = await GetPartiEM();
+                result.ListaTipiEmendamento = await GetTipiEM();
                 result.ListaMissioni = _unitOfWork
                     .Emendamenti
                     .GetMissioniEmendamento()
@@ -932,9 +926,9 @@ namespace PortaleRegione.BAL
         ///     Ritorna la lista delle parti testo emendabili
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<PartiTestoDto> GetPartiEM()
+        public async Task<IEnumerable<PartiTestoDto>> GetPartiEM()
         {
-            return _unitOfWork.Emendamenti.GetPartiEmendabili().Select(Mapper.Map<PARTI_TESTO, PartiTestoDto>);
+            return (await _unitOfWork.Emendamenti.GetPartiEmendabili()).Select(Mapper.Map<PARTI_TESTO, PartiTestoDto>);
         }
 
         #endregion
@@ -945,11 +939,11 @@ namespace PortaleRegione.BAL
         ///     Ritorna la lista dei tipi di emendamento disponibili
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<Tipi_EmendamentiDto> GetTipiEM()
+        public async Task<IEnumerable<Tipi_EmendamentiDto>> GetTipiEM()
         {
-            return _unitOfWork
-                .Emendamenti
-                .GetTipiEmendamento()
+            return (await _unitOfWork
+                    .Emendamenti
+                    .GetTipiEmendamento())
                 .Select(Mapper.Map<TIPI_EM, Tipi_EmendamentiDto>);
         }
 
@@ -993,11 +987,11 @@ namespace PortaleRegione.BAL
         ///     Ritorna la lista degli stati disponibili nel db
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<StatiDto> GetStatiEM()
+        public async Task<IEnumerable<StatiDto>> GetStatiEM()
         {
-            return _unitOfWork
-                .Emendamenti
-                .GetStatiEmendamento()
+            return (await _unitOfWork
+                    .Emendamenti
+                    .GetStatiEmendamento())
                 .Select(Mapper.Map<STATI_EM, StatiDto>);
         }
 

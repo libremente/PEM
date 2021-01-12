@@ -893,12 +893,13 @@ namespace PortaleRegione.API.Controllers
         ///     Endpoint per avere le parti emendabili a DB
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         [Route("parti-em")]
         public async Task<IHttpActionResult> GetPartiEM()
         {
             try
             {
-                return Ok(_logicEm.GetPartiEM());
+                return Ok(await _logicEm.GetPartiEM());
             }
             catch (Exception e)
             {
@@ -911,12 +912,13 @@ namespace PortaleRegione.API.Controllers
         ///     Endpoint per avere i tipi di emendmento
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         [Route("tipi-em")]
         public async Task<IHttpActionResult> GetTipiEM()
         {
             try
             {
-                return Ok(_logicEm.GetTipiEM());
+                return Ok(await _logicEm.GetTipiEM());
             }
             catch (Exception e)
             {
@@ -929,6 +931,7 @@ namespace PortaleRegione.API.Controllers
         ///     Endpoint per avere le missioni
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         [Route("missioni-em")]
         public async Task<IHttpActionResult> GetMissioniEM()
         {
@@ -947,6 +950,7 @@ namespace PortaleRegione.API.Controllers
         ///     Endpoint per avere i titoli / missione
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         [Route("titoli-missioni-em")]
         public async Task<IHttpActionResult> GetTitoliMissioni()
         {
@@ -965,12 +969,13 @@ namespace PortaleRegione.API.Controllers
         ///     Endpoint per avere gli stati
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         [Route("stati-em")]
         public async Task<IHttpActionResult> GetStatiEM()
         {
             try
             {
-                return Ok(_logicEm.GetStatiEM());
+                return Ok(await _logicEm.GetStatiEM());
             }
             catch (Exception e)
             {

@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using ExpressionBuilder.Generics;
 using PortaleRegione.BAL;
 using PortaleRegione.Contracts;
@@ -340,18 +341,18 @@ namespace PortaleRegione.Persistance
         ///     Ritorna tutti i valori disponibili in tabella
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<PARTI_TESTO> GetPartiEmendabili()
+        public async Task<IEnumerable<PARTI_TESTO>> GetPartiEmendabili()
         {
-            return PRContext.PARTI_TESTO.ToList();
+            return await PRContext.PARTI_TESTO.ToListAsync();
         }
 
         /// <summary>
         ///     Ritorna tutti i valori disponibili in tabella
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<TIPI_EM> GetTipiEmendamento()
+        public async Task<IEnumerable<TIPI_EM>> GetTipiEmendamento()
         {
-            return PRContext.TIPI_EM.ToList();
+            return await PRContext.TIPI_EM.ToListAsync();
         }
 
         /// <summary>
@@ -376,11 +377,11 @@ namespace PortaleRegione.Persistance
         /// Ritorna tutti i valori disponibili per gli stati in tabella
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<STATI_EM> GetStatiEmendamento()
+        public async Task<IEnumerable<STATI_EM>> GetStatiEmendamento()
         {
-            return PRContext
+            return await PRContext
                 .STATI_EM
-                .ToList();
+                .ToListAsync();
         }
 
         #endregion

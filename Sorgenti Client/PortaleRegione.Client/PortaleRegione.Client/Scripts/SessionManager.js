@@ -60,6 +60,28 @@ function set_ListaStatiEM(obj) {
     sessionStorage.setItem("ListaStatiEM", JSON.stringify(obj));
 }
 
+function get_ListaTipiEM() {
+    var session_raw = sessionStorage.getItem("ListaTipiEM");
+    if (session_raw == null)
+        return {}
+    return JSON.parse(session_raw);
+}
+
+function set_ListaTipiEM(obj) {
+    sessionStorage.setItem("ListaTipiEM", JSON.stringify(obj));
+}
+
+function get_ListaPartiEM() {
+    var session_raw = sessionStorage.getItem("ListaPartiEM");
+    if (session_raw == null)
+        return {}
+    return JSON.parse(session_raw);
+}
+
+function set_ListaPartiEM(obj) {
+    sessionStorage.setItem("ListaPartiEM", JSON.stringify(obj));
+}
+
 /////////////////////////////////////////////////////////////
 ////////
 ////////            FILTRI

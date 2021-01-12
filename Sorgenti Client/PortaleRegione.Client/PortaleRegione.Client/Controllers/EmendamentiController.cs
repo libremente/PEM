@@ -685,6 +685,20 @@ namespace PortaleRegione.Client.Controllers
         {
             return Json(await ApiGateway.GetStatiEM(), JsonRequestBehavior.AllowGet);
         }
+        
+        [HttpGet]
+        [Route("tipi-em")]
+        public async Task<ActionResult> Filtri_GetTipiEM()
+        {
+            return Json(await ApiGateway.GetTipiEM(), JsonRequestBehavior.AllowGet);
+        }
+        
+        [HttpGet]
+        [Route("parti-em")]
+        public async Task<ActionResult> Filtri_GetPartiEM()
+        {
+            return Json(await ApiGateway.GetPartiEM(), JsonRequestBehavior.AllowGet);
+        }
 
         [HttpPost]
         [Route("filtra")]
@@ -699,7 +713,8 @@ namespace PortaleRegione.Client.Controllers
             var filtro_text1 = Request.Form["filtro_text1"];
             var filtro_n_em = Request.Form["filtro_n_em"];
             var filtro_stato = Request.Form["filtro_stato"];
-
+            var filtro_tipo = Request.Form["filtro_tipo"];
+            var filtro_parte = Request.Form["filtro_parte"];
 
             var model = new BaseRequest<EmendamentiDto>
             {
@@ -723,12 +738,28 @@ namespace PortaleRegione.Client.Controllers
                     Value = filtro_n_em
                 });
             
-            if (!string.IsNullOrEmpty(filtro_stato))
+            if (!string.IsNullOrEmpty(filtro_stato) && filtro_stato != "-10")
                 model.filtro.Add(new FilterStatement<EmendamentiDto>
                 {
                     PropertyId = nameof(EmendamentiDto.IDStato),
                     Operation = Operation.EqualTo,
                     Value = filtro_stato
+                });
+            
+            if (!string.IsNullOrEmpty(filtro_parte) && filtro_parte != "-10")
+                model.filtro.Add(new FilterStatement<EmendamentiDto>
+                {
+                    PropertyId = nameof(EmendamentiDto.IDParte),
+                    Operation = Operation.EqualTo,
+                    Value = filtro_parte
+                });
+            
+            if (!string.IsNullOrEmpty(filtro_tipo) && filtro_tipo != "-10")
+                model.filtro.Add(new FilterStatement<EmendamentiDto>
+                {
+                    PropertyId = nameof(EmendamentiDto.IDTipo_EM),
+                    Operation = Operation.EqualTo,
+                    Value = filtro_tipo
                 });
 
             if (!model.filtro.Any())

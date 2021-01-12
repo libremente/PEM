@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ExpressionBuilder.Generics;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Domain;
@@ -50,11 +51,11 @@ namespace PortaleRegione.Contracts
         int GetProgressivo(Guid attoUId, int gruppo, bool sub);
         int GetEtichetta(Guid attoUId, bool sub);
         IEnumerable<NOTIFICHE_DESTINATARI> GetInvitati(Guid emendamentoUId);
-        IEnumerable<PARTI_TESTO> GetPartiEmendabili();
-        IEnumerable<TIPI_EM> GetTipiEmendamento();
+        Task<IEnumerable<PARTI_TESTO>> GetPartiEmendabili();
+        Task<IEnumerable<TIPI_EM>> GetTipiEmendamento();
         IEnumerable<MISSIONI> GetMissioniEmendamento();
         IEnumerable<TITOLI_MISSIONI> GetTitoliMissioneEmendamento();
-        IEnumerable<STATI_EM> GetStatiEmendamento();
+        Task<IEnumerable<STATI_EM>> GetStatiEmendamento();
 
         #endregion
 
