@@ -51,21 +51,21 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("view-inviate")]
-        public IHttpActionResult GetNotificheInviate(BaseRequest<NotificaDto> model)
+        public async Task<IHttpActionResult> GetNotificheInviate(BaseRequest<NotificaDto> model)
         {
             try
             {
                 object Archivio;
                 model.param.TryGetValue("Archivio", out Archivio);
-
-                var result = _logic.GetNotificheInviate(model, SessionManager.Persona, Convert.ToBoolean(Archivio));
+                var persona = await GetSession();
+                var result = await _logic.GetNotificheInviate(model, persona, Convert.ToBoolean(Archivio));
 
                 return Ok(new BaseResponse<NotificaDto>(
                     model.page,
                     model.size,
                     result,
                     model.filtro,
-                    _logic.CountInviate(model, SessionManager.Persona, Convert.ToBoolean(Archivio)),
+                    await _logic.CountInviate(model, persona, Convert.ToBoolean(Archivio)),
                     Request.RequestUri));
             }
             catch (Exception e)
@@ -86,7 +86,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                await _logic.NotificaVista(notificaId, SessionManager.Persona.UID_persona);
+                await _logic.NotificaVista(notificaId, (await GetSession()).UID_persona);
 
                 return Ok();
             }
@@ -104,21 +104,21 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("view-ricevute")]
-        public IHttpActionResult GetNotificheRicevute(BaseRequest<NotificaDto> model)
+        public async Task<IHttpActionResult> GetNotificheRicevute(BaseRequest<NotificaDto> model)
         {
             try
             {
                 object Archivio;
                 model.param.TryGetValue("Archivio", out Archivio);
-
-                var result = _logic.GetNotificheRicevute(model, SessionManager.Persona, Convert.ToBoolean(Archivio));
+                var persona = await GetSession();
+                var result = await _logic.GetNotificheRicevute(model, persona, Convert.ToBoolean(Archivio));
 
                 return Ok(new BaseResponse<NotificaDto>(
                     model.page,
                     model.size,
                     result,
                     model.filtro,
-                    _logic.CountRicevute(model, SessionManager.Persona, Convert.ToBoolean(Archivio)),
+                    await _logic.CountRicevute(model, persona, Convert.ToBoolean(Archivio)),
                     Request.RequestUri));
             }
             catch (Exception e)
@@ -135,11 +135,11 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("{id:int}/destinatari")]
-        public IHttpActionResult GetDestinatariNotifica(int id)
+        public async Task<IHttpActionResult> GetDestinatariNotifica(int id)
         {
             try
             {
-                return Ok(_logic.GetDestinatariNotifica(id));
+                return Ok(await _logic.GetDestinatariNotifica(id));
             }
             catch (Exception e)
             {
@@ -159,17 +159,18 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
+                var persona = await GetSession();
                 var invitoDaSegreteria =
-                    SessionManager.Persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Politica ||
-                    SessionManager.Persona.CurrentRole == RuoliIntEnum.Segreteria_Politica ||
-                    SessionManager.Persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Giunta ||
-                    SessionManager.Persona.CurrentRole == RuoliIntEnum.Segreteria_Giunta_Regionale ||
-                    SessionManager.Persona.CurrentRole == RuoliIntEnum.Amministratore_PEM;
+                    persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Politica ||
+                    persona.CurrentRole == RuoliIntEnum.Segreteria_Politica ||
+                    persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Giunta ||
+                    persona.CurrentRole == RuoliIntEnum.Segreteria_Giunta_Regionale ||
+                    persona.CurrentRole == RuoliIntEnum.Amministratore_PEM;
 
                 if (invitoDaSegreteria)
-                    return Ok(await _logic.InvitaAFirmareEmendamento(model, SessionManager.Persona));
+                    return Ok(await _logic.InvitaAFirmareEmendamento(model, persona));
 
-                var pinInDb = _logicPersone.GetPin(SessionManager.Persona);
+                var pinInDb = await _logicPersone.GetPin(persona);
                 if (pinInDb == null)
                     return BadRequest("Pin non impostato");
                 if (pinInDb.RichiediModificaPIN)
@@ -177,7 +178,7 @@ namespace PortaleRegione.API.Controllers
                 if (model.Pin != pinInDb.PIN_Decrypt)
                     return BadRequest("Pin inserito non valido");
 
-                return Ok(await _logic.InvitaAFirmareEmendamento(model, SessionManager.Persona));
+                return Ok(await _logic.InvitaAFirmareEmendamento(model, persona));
             }
             catch (Exception e)
             {
@@ -194,11 +195,11 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("destinatari")]
-        public IHttpActionResult GetListaDestinatari(Guid atto, TipoDestinatarioNotificaEnum tipo)
+        public async Task<IHttpActionResult> GetListaDestinatari(Guid atto, TipoDestinatarioNotificaEnum tipo)
         {
             try
             {
-                return Ok(_logic.GetListaDestinatari(atto, tipo, SessionManager.Persona));
+                return Ok(_logic.GetListaDestinatari(atto, tipo, await GetSession()));
             }
             catch (Exception e)
             {

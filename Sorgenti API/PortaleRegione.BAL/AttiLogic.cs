@@ -36,12 +36,14 @@ namespace PortaleRegione.BAL
     public class AttiLogic
     {
         protected IUnitOfWork _unitOfWork;
+
         public AttiLogic(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
 
-        public BaseResponse<AttiDto> GetAtti(BaseRequest<AttiDto> model, int CLIENT_MODE, PersonaDto currentUser,
+        public async Task<BaseResponse<AttiDto>> GetAtti(BaseRequest<AttiDto> model, int CLIENT_MODE,
+            PersonaDto currentUser,
             Uri url)
         {
             try
@@ -49,18 +51,18 @@ namespace PortaleRegione.BAL
                 var queryFilter = new Filter<ATTI>();
                 queryFilter.ImportStatements(model.filtro);
 
-                var appoggioAttiDtos = _unitOfWork.Atti.GetAll(model.id, model.page, model.size, queryFilter)
+                var appoggioAttiDtos = (await _unitOfWork.Atti.GetAll(model.id, model.page, model.size, queryFilter))
                     .Select(Mapper.Map<ATTI, AttiDto>);
                 var result = new List<AttiDto>();
                 foreach (var appoggio in appoggioAttiDtos)
                 {
-                    appoggio.Conteggio_EM = _unitOfWork.Emendamenti.Count(appoggio.UIDAtto,
+                    appoggio.Conteggio_EM = await _unitOfWork.Emendamenti.Count(appoggio.UIDAtto,
                         currentUser, CounterEmendamentiEnum.EM, CLIENT_MODE);
-                    appoggio.Conteggio_SubEM = _unitOfWork.Emendamenti.Count(appoggio.UIDAtto,
+                    appoggio.Conteggio_SubEM = await _unitOfWork.Emendamenti.Count(appoggio.UIDAtto,
                         currentUser, CounterEmendamentiEnum.SUB_EM, CLIENT_MODE);
 
-                    var listaArticoli = _unitOfWork.Articoli.GetArticoli(appoggio.UIDAtto);
-                    var listaRelatori = _unitOfWork.Persone.GetRelatori(appoggio.UIDAtto);
+                    var listaArticoli = await _unitOfWork.Articoli.GetArticoli(appoggio.UIDAtto);
+                    var listaRelatori = await _unitOfWork.Persone.GetRelatori(appoggio.UIDAtto);
 
                     appoggio.Informazioni_Mancanti = listaArticoli.Any() || listaRelatori.Any() ? false : true;
                     result.Add(appoggio);
@@ -71,7 +73,7 @@ namespace PortaleRegione.BAL
                     model.size,
                     result,
                     model.filtro,
-                    _unitOfWork.Atti.Count(model.id, queryFilter),
+                    await _unitOfWork.Atti.Count(model.id, queryFilter),
                     url);
             }
             catch (Exception e)
@@ -105,7 +107,7 @@ namespace PortaleRegione.BAL
                 atto.DataCreazione = DateTime.Now;
                 atto.OrdinePresentazione = false;
                 atto.OrdineVotazione = false;
-                atto.Priorita = _unitOfWork.Atti.PrioritaAtto(atto.UIDSeduta.Value);
+                atto.Priorita = await _unitOfWork.Atti.PrioritaAtto(atto.UIDSeduta.Value);
                 _unitOfWork.Atti.Add(atto);
                 await _unitOfWork.CompleteAsync();
 
@@ -161,9 +163,9 @@ namespace PortaleRegione.BAL
             }
         }
 
-        public IEnumerable<ArticoliDto> GetArticoli(Guid id)
+        public async Task<IEnumerable<ArticoliDto>> GetArticoli(Guid id)
         {
-            return _unitOfWork.Articoli.GetArticoli(id).Select(Mapper.Map<ARTICOLI, ArticoliDto>);
+            return (await _unitOfWork.Articoli.GetArticoli(id)).Select(Mapper.Map<ARTICOLI, ArticoliDto>);
         }
 
         public async Task CreaArticoli(Guid id, string articoli)
@@ -181,7 +183,7 @@ namespace PortaleRegione.BAL
 
                         for (var i = Convert.ToInt32(start); i <= Convert.ToInt32(end); i++)
                         {
-                            if (_unitOfWork.Articoli.CheckIfArticoloExists(id, i.ToString()))
+                            if (await _unitOfWork.Articoli.CheckIfArticoloExists(id, i.ToString()))
                                 continue;
 
                             _unitOfWork.Articoli.Add(new ARTICOLI
@@ -189,21 +191,21 @@ namespace PortaleRegione.BAL
                                 Articolo = i.ToString(),
                                 UIDAtto = id,
                                 UIDArticolo = Guid.NewGuid(),
-                                Ordine = _unitOfWork.Articoli.OrdineArticolo(id)
+                                Ordine = await _unitOfWork.Articoli.OrdineArticolo(id)
                             });
                             await _unitOfWork.CompleteAsync();
                         }
                     }
                     else
                     {
-                        if (_unitOfWork.Articoli.CheckIfArticoloExists(id, s))
+                        if (await _unitOfWork.Articoli.CheckIfArticoloExists(id, s))
                             continue;
                         _unitOfWork.Articoli.Add(new ARTICOLI
                         {
                             Articolo = s,
                             UIDAtto = id,
                             UIDArticolo = Guid.NewGuid(),
-                            Ordine = _unitOfWork.Articoli.OrdineArticolo(id)
+                            Ordine = await _unitOfWork.Articoli.OrdineArticolo(id)
                         });
                         await _unitOfWork.CompleteAsync();
                     }
@@ -215,11 +217,11 @@ namespace PortaleRegione.BAL
             }
         }
 
-        public ARTICOLI GetArticolo(Guid id)
+        public async Task<ARTICOLI> GetArticolo(Guid id)
         {
             try
             {
-                return _unitOfWork.Articoli.GetArticolo(id);
+                return await _unitOfWork.Articoli.GetArticolo(id);
             }
             catch (Exception e)
             {
@@ -242,11 +244,11 @@ namespace PortaleRegione.BAL
             }
         }
 
-        public IEnumerable<COMMI> GetCommi(Guid id)
+        public async Task<IEnumerable<COMMI>> GetCommi(Guid id)
         {
             try
             {
-                return _unitOfWork.Commi.GetCommi(id);
+                return await _unitOfWork.Commi.GetCommi(id);
             }
             catch (Exception e)
             {
@@ -269,11 +271,11 @@ namespace PortaleRegione.BAL
             }
         }
 
-        public IEnumerable<LETTERE> GetLettere(Guid commaUId)
+        public async Task<IEnumerable<LETTERE>> GetLettere(Guid commaUId)
         {
             try
             {
-                return _unitOfWork.Lettere.GetLettere(commaUId);
+                return await _unitOfWork.Lettere.GetLettere(commaUId);
             }
             catch (Exception e)
             {
@@ -325,7 +327,8 @@ namespace PortaleRegione.BAL
 
                         for (var i = Convert.ToInt32(start); i <= Convert.ToInt32(end); i++)
                         {
-                            if (_unitOfWork.Commi.CheckIfCommiExists(articolo.UIDArticolo, i.ToString())) continue;
+                            if (await _unitOfWork.Commi.CheckIfCommiExists(articolo.UIDArticolo, i.ToString()))
+                                continue;
 
                             _unitOfWork.Commi.Add(new COMMI
                             {
@@ -333,21 +336,21 @@ namespace PortaleRegione.BAL
                                 UIDComma = Guid.NewGuid(),
                                 UIDAtto = articolo.UIDAtto,
                                 UIDArticolo = articolo.UIDArticolo,
-                                Ordine = _unitOfWork.Commi.OrdineComma(articolo.UIDArticolo)
+                                Ordine = await _unitOfWork.Commi.OrdineComma(articolo.UIDArticolo)
                             });
                             await _unitOfWork.CompleteAsync();
                         }
                     }
                     else
                     {
-                        if (_unitOfWork.Commi.CheckIfCommiExists(articolo.UIDArticolo, s)) continue;
+                        if (await _unitOfWork.Commi.CheckIfCommiExists(articolo.UIDArticolo, s)) continue;
                         _unitOfWork.Commi.Add(new COMMI
                         {
                             Comma = s,
                             UIDComma = Guid.NewGuid(),
                             UIDAtto = articolo.UIDAtto,
                             UIDArticolo = articolo.UIDArticolo,
-                            Ordine = _unitOfWork.Commi.OrdineComma(articolo.UIDArticolo)
+                            Ordine = await _unitOfWork.Commi.OrdineComma(articolo.UIDArticolo)
                         });
                         await _unitOfWork.CompleteAsync();
                     }
@@ -361,11 +364,11 @@ namespace PortaleRegione.BAL
             await _unitOfWork.CompleteAsync();
         }
 
-        public COMMI GetComma(Guid id)
+        public async Task<COMMI> GetComma(Guid id)
         {
             try
             {
-                return _unitOfWork.Commi.GetComma(id);
+                return await _unitOfWork.Commi.GetComma(id);
             }
             catch (Exception e)
             {
@@ -390,64 +393,48 @@ namespace PortaleRegione.BAL
 
         public async Task CreaLettere(COMMI comma, string lettere)
         {
-            try
-            {
-                var appo = lettere.Split(',');
-                foreach (var s in appo)
-                    if (s.Contains("-"))
-                    {
-                        //INSERIMENTO RANGE
-                        var appo_range = s.Split('-');
-                        var start = int.Parse(appo_range[0]);
-                        var end = int.Parse(appo_range[1]);
+            var appo = lettere.Split(',');
+            foreach (var s in appo)
+                if (s.Contains("-"))
+                {
+                    //INSERIMENTO RANGE
+                    var appo_range = s.Split('-');
+                    var start = int.Parse(appo_range[0]);
+                    var end = int.Parse(appo_range[1]);
 
-                        for (var i = Convert.ToInt32(start); i <= Convert.ToInt32(end); i++)
-                        {
-                            if (_unitOfWork.Lettere.CheckIfLetteraExists(comma.UIDComma, i.ToString())) continue;
-
-                            _unitOfWork.Lettere.Add(new LETTERE
-                            {
-                                Lettera = i.ToString(),
-                                UIDComma = comma.UIDComma,
-                                UIDLettera = Guid.NewGuid(),
-                                Ordine = _unitOfWork.Lettere.OrdineLettera(comma.UIDComma)
-                            });
-                            await _unitOfWork.CompleteAsync();
-                        }
-                    }
-                    else
+                    for (var i = Convert.ToInt32(start); i <= Convert.ToInt32(end); i++)
                     {
-                        if (_unitOfWork.Commi.CheckIfCommiExists(comma.UIDComma, s)) continue;
+                        if (await _unitOfWork.Lettere.CheckIfLetteraExists(comma.UIDComma, i.ToString())) continue;
+
                         _unitOfWork.Lettere.Add(new LETTERE
                         {
-                            Lettera = s,
+                            Lettera = i.ToString(),
                             UIDComma = comma.UIDComma,
                             UIDLettera = Guid.NewGuid(),
-                            Ordine = _unitOfWork.Lettere.OrdineLettera(comma.UIDComma)
+                            Ordine = await _unitOfWork.Lettere.OrdineLettera(comma.UIDComma)
                         });
                         await _unitOfWork.CompleteAsync();
                     }
-            }
-            catch (Exception e)
-            {
-                Log.Error("Crea Lettere", e);
-                throw;
-            }
+                }
+                else
+                {
+                    if (await _unitOfWork.Commi.CheckIfCommiExists(comma.UIDComma, s)) continue;
+                    _unitOfWork.Lettere.Add(new LETTERE
+                    {
+                        Lettera = s,
+                        UIDComma = comma.UIDComma,
+                        UIDLettera = Guid.NewGuid(),
+                        Ordine = await _unitOfWork.Lettere.OrdineLettera(comma.UIDComma)
+                    });
+                    await _unitOfWork.CompleteAsync();
+                }
 
             await _unitOfWork.CompleteAsync();
         }
 
-        public LETTERE GetLettera(Guid id)
+        public async Task<LETTERE> GetLettera(Guid id)
         {
-            try
-            {
-                return _unitOfWork.Lettere.GetLettera(id);
-            }
-            catch (Exception e)
-            {
-                Log.Error("Get Lettera", e);
-                throw;
-            }
+            return await _unitOfWork.Lettere.GetLettera(id);
         }
 
         public async Task SalvaRelatori(Guid attoUId, IEnumerable<Guid> relatori)
@@ -463,21 +450,6 @@ namespace PortaleRegione.BAL
                 throw;
             }
         }
-
-        #region GetAtto
-
-        public ATTI GetAtto(Guid id)
-        {
-            return _unitOfWork.Atti.Get(id);
-        }
-
-        public ATTI GetAtto(string id)
-        {
-            var guidId = new Guid(id);
-            return _unitOfWork.Atti.Get(guidId);
-        }
-
-        #endregion
 
         public async Task PubblicaFascicolo(ATTI attoInDb, PubblicaFascicoloModel model, PersonaDto currentUser)
         {
@@ -509,5 +481,20 @@ namespace PortaleRegione.BAL
                 throw;
             }
         }
+
+        #region GetAtto
+
+        public async Task<ATTI> GetAtto(Guid id)
+        {
+            return await _unitOfWork.Atti.Get(id);
+        }
+
+        public async Task<ATTI> GetAtto(string id)
+        {
+            var guidId = new Guid(id);
+            return await _unitOfWork.Atti.Get(guidId);
+        }
+
+        #endregion
     }
 }

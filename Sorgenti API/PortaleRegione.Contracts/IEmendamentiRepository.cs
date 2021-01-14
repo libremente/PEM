@@ -32,29 +32,29 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface IEmendamentiRepository : IRepository<EM>
     {
-        int Count(Guid attoUId, PersonaDto persona, CounterEmendamentiEnum counter_emendamenti, int CLIENT_MODE,
+        Task<int> Count(Guid attoUId, PersonaDto persona, CounterEmendamentiEnum counter_emendamenti, int CLIENT_MODE,
             Filter<EM> filtro = null);
 
-        int Count(string query);
+        Task<int> Count(string query);
 
         #region GET
 
-        IEnumerable<Guid> GetAll(Guid attoUId, PersonaDto persona, OrdinamentoEnum ordine, int? page, int? size,
+        Task<IEnumerable<Guid>> GetAll(Guid attoUId, PersonaDto persona, OrdinamentoEnum ordine, int? page, int? size,
             int CLIENT_MODE, Filter<EM> filtro = null);
 
         IEnumerable<EM> GetAll(EmendamentiByQueryModel model);
 
         string GetAll_Query(Guid attoUId, PersonaDto persona, OrdinamentoEnum ordine, Filter<EM> filtro = null);
 
-        EM Get(Guid emendamentoUId);
-        EM Get(string emendamentoUId);
-        int GetProgressivo(Guid attoUId, int gruppo, bool sub);
-        int GetEtichetta(Guid attoUId, bool sub);
-        IEnumerable<NOTIFICHE_DESTINATARI> GetInvitati(Guid emendamentoUId);
+        Task<EM> Get(Guid emendamentoUId);
+        Task<EM> Get(string emendamentoUId);
+        Task<int> GetProgressivo(Guid attoUId, int gruppo, bool sub);
+        Task<int> GetEtichetta(Guid attoUId, bool sub);
+        Task<IEnumerable<NOTIFICHE_DESTINATARI>> GetInvitati(Guid emendamentoUId);
         Task<IEnumerable<PARTI_TESTO>> GetPartiEmendabili();
         Task<IEnumerable<TIPI_EM>> GetTipiEmendamento();
-        IEnumerable<MISSIONI> GetMissioniEmendamento();
-        IEnumerable<TITOLI_MISSIONI> GetTitoliMissioneEmendamento();
+        Task<IEnumerable<MISSIONI>> GetMissioniEmendamento();
+        Task<IEnumerable<TITOLI_MISSIONI>> GetTitoliMissioneEmendamento();
         Task<IEnumerable<STATI_EM>> GetStatiEmendamento();
 
         #endregion
@@ -63,18 +63,18 @@ namespace PortaleRegione.Contracts
 
         bool CheckIfEliminabile(EmendamentiDto em, PersonaDto persona);
         bool CheckIfRitirabile(EmendamentiDto em, PersonaDto persona);
-        bool CheckIfDepositabile(EmendamentiDto em, PersonaDto persona);
-        bool CheckIfModificabile(EmendamentiDto em, PersonaDto persona);
-        bool CheckProgressivo(Guid attoUId, string encrypt_progressivo, CounterEmendamentiEnum counter_emendamenti);
+        Task<bool> CheckIfDepositabile(EmendamentiDto em, PersonaDto persona);
+        Task<bool> CheckIfModificabile(EmendamentiDto em, PersonaDto persona);
+        Task<bool> CheckProgressivo(Guid attoUId, string encrypt_progressivo, CounterEmendamentiEnum counter_emendamenti);
 
         #endregion
 
         #region SPOSTAMENTI EM IN FASE DI VOTAZIONE
 
-        void ORDINA_EM_TRATTAZIONE(Guid attoUId);
-        void UP_EM_TRATTAZIONE(Guid emendamentoUId);
-        void DOWN_EM_TRATTAZIONE(Guid emendamentoUId);
-        void SPOSTA_EM_TRATTAZIONE(Guid emendamentoUId, int pos);
+        Task ORDINA_EM_TRATTAZIONE(Guid attoUId);
+        Task UP_EM_TRATTAZIONE(Guid emendamentoUId);
+        Task DOWN_EM_TRATTAZIONE(Guid emendamentoUId);
+        Task SPOSTA_EM_TRATTAZIONE(Guid emendamentoUId, int pos);
 
         #endregion
     }

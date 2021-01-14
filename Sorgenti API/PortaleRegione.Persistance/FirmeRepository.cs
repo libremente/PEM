@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
 using PortaleRegione.Domain;
@@ -67,19 +68,73 @@ namespace PortaleRegione.Persistance
         /// </summary>
         /// <param name="emendamentoUId"></param>
         /// <returns></returns>
-        public int CountFirme(Guid emendamentoUId)
+        public async Task<int> CountFirme(Guid emendamentoUId)
         {
-            try
-            {
-                return PRContext
-                    .FIRME
-                    .Count(f => f.UIDEM == emendamentoUId && string.IsNullOrEmpty(f.Data_ritirofirma));
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
+            return await PRContext
+                .FIRME
+                .CountAsync(f => f.UIDEM == emendamentoUId && string.IsNullOrEmpty(f.Data_ritirofirma));
+        }
+
+        public async Task CancellaFirme(Guid emendamentoUId)
+        {
+            var firmeDaEliminare = await PRContext
+                .FIRME
+                .Where(f => f.UIDEM == emendamentoUId)
+                .ToListAsync();
+            PRContext
+                .FIRME
+                .RemoveRange(firmeDaEliminare);
+        }
+
+        /// <summary>
+        ///     Controlla che l'emendamento sia firmabile
+        /// </summary>
+        /// <param name="em"></param>
+        /// <param name="persona"></param>
+        /// <returns></returns>
+        public async Task<bool> CheckIfFirmabile(EmendamentiDto em, PersonaDto persona)
+        {
+            if (em.STATI_EM.IDStato > (int) StatiEnum.Depositato) return false;
+
+            var firma_personale = await CheckFirmato(em.UIDEM, persona.UID_persona);
+            var firma_proponente = await CheckFirmato(em.UIDEM, em.UIDPersonaProponente.Value);
+
+            if (firma_personale == false
+                && (firma_proponente || em.UIDPersonaProponente == persona.UID_persona)
+                && (persona.CurrentRole == RuoliIntEnum.Consigliere_Regionale ||
+                    persona.CurrentRole == RuoliIntEnum.Assessore_Sottosegretario_Giunta ||
+                    persona.CurrentRole == RuoliIntEnum.Presidente_Regione))
+                return true;
+
+            if (persona.CurrentRole != RuoliIntEnum.Amministratore_PEM &&
+                persona.CurrentRole != RuoliIntEnum.Segreteria_Assemblea) return false;
+
+            var firmatoUfficio = await CheckFirmatoDaUfficio(em.UIDEM);
+            return !firmatoUfficio;
+        }
+
+        /// <summary>
+        ///     Controlla se l'ufficio ha firmato l'emendamento
+        /// </summary>
+        /// <param name="em"></param>
+        /// <returns></returns>
+        public async Task<bool> CheckFirmatoDaUfficio(Guid emedamentoUId)
+        {
+            return await PRContext.FIRME.AnyAsync(f => f.UIDEM == emedamentoUId && f.ufficio);
+        }
+
+        /// <summary>
+        ///     Controlla se la persona ha firmato l'emendamento
+        /// </summary>
+        /// <param name="em"></param>
+        /// <param name="personaUId"></param>
+        /// <returns></returns>
+        public async Task<bool> CheckFirmato(Guid emendamentoUId, Guid personaUId)
+        {
+            var firme = await PRContext
+                .FIRME
+                .FindAsync(emendamentoUId, personaUId);
+            return firme != null && string.IsNullOrEmpty(firme.Data_ritirofirma);
         }
 
         /// <summary>
@@ -87,11 +142,11 @@ namespace PortaleRegione.Persistance
         /// </summary>
         /// <param name="emendamentoUId"></param>
         /// <returns></returns>
-        public IEnumerable<FIRME> GetFirmatari(EM em, FirmeTipoEnum tipo)
+        public async Task<IEnumerable<FIRME>> GetFirmatari(EM em, FirmeTipoEnum tipo)
         {
-            var firmaProponente = PRContext
+            var firmaProponente = await PRContext
                 .FIRME
-                .SingleOrDefault(f =>
+                .SingleOrDefaultAsync(f =>
                     f.UIDEM == em.UIDEM
                     && f.UID_persona == em.UIDPersonaProponente);
 
@@ -119,74 +174,12 @@ namespace PortaleRegione.Persistance
 
             query = query.OrderBy(f => f.Timestamp);
 
-            var lst = query
-                .ToList();
+            var lst = await query
+                .ToListAsync();
 
             if (firmaProponente != null && tipo != FirmeTipoEnum.DOPO_DEPOSITO) lst.Insert(0, firmaProponente);
 
             return lst;
-        }
-
-        public void CancellaFirme(Guid emendamentoUId)
-        {
-            var firmeDaEliminare = PRContext
-                .FIRME
-                .Where(f => f.UIDEM == emendamentoUId)
-                .ToList();
-            PRContext
-                .FIRME
-                .RemoveRange(firmeDaEliminare);
-        }
-
-        /// <summary>
-        ///     Controlla che l'emendamento sia firmabile
-        /// </summary>
-        /// <param name="em"></param>
-        /// <param name="persona"></param>
-        /// <returns></returns>
-        public bool CheckIfFirmabile(EmendamentiDto em, PersonaDto persona)
-        {
-            if (em.STATI_EM.IDStato > (int) StatiEnum.Depositato) return false;
-
-            var firma_personale = CheckFirmato(em.UIDEM, persona.UID_persona);
-            var firma_proponente = CheckFirmato(em.UIDEM, em.UIDPersonaProponente.Value);
-
-            if (firma_personale == false
-                && (firma_proponente || em.UIDPersonaProponente == persona.UID_persona)
-                && (persona.CurrentRole == RuoliIntEnum.Consigliere_Regionale ||
-                    persona.CurrentRole == RuoliIntEnum.Assessore_Sottosegretario_Giunta ||
-                    persona.CurrentRole == RuoliIntEnum.Presidente_Regione))
-                return true;
-
-            if (persona.CurrentRole != RuoliIntEnum.Amministratore_PEM &&
-                persona.CurrentRole != RuoliIntEnum.Segreteria_Assemblea) return false;
-
-            var firmatoUfficio = CheckFirmatoDaUfficio(em.UIDEM);
-            return !firmatoUfficio;
-        }
-
-        /// <summary>
-        ///     Controlla se l'ufficio ha firmato l'emendamento
-        /// </summary>
-        /// <param name="em"></param>
-        /// <returns></returns>
-        public bool CheckFirmatoDaUfficio(Guid emedamentoUId)
-        {
-            return PRContext.FIRME.Any(f => f.UIDEM == emedamentoUId && f.ufficio);
-        }
-
-        /// <summary>
-        ///     Controlla se la persona ha firmato l'emendamento
-        /// </summary>
-        /// <param name="em"></param>
-        /// <param name="personaUId"></param>
-        /// <returns></returns>
-        public bool CheckFirmato(Guid emendamentoUId, Guid personaUId)
-        {
-            var firme = PRContext
-                .FIRME
-                .Find(emendamentoUId, personaUId);
-            return firme != null && string.IsNullOrEmpty(firme.Data_ritirofirma);
         }
     }
 }

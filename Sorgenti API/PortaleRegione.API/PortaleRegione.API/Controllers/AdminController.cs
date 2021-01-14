@@ -56,11 +56,11 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var results = _logic.GetPersoneIn_DB(model);
+                var results = await _logic.GetPersoneIn_DB(model);
 
                 var intranetAdService = new proxyAD();
                 var personaDtos = results.ToList();
-                personaDtos.ToList().ForEach(persona =>
+                personaDtos.ToList().ForEach(async persona =>
                 {
                     var gruppiUtente_PEM = new List<string>(intranetAdService.GetGroups(
                         persona.userAD.Replace(@"CONSIGLIO\", ""), "PEM_", AppSettingsConfiguration.TOKEN_R));
@@ -71,7 +71,7 @@ namespace PortaleRegione.API.Controllers
                     if (gruppiUtente_AD.Any())
                         persona.GruppiAD = gruppiUtente_AD.Aggregate((i, j) => i + "; " + j);
 
-                    _logic.CheckPin(ref persona);
+                    persona.Stato_Pin = await _logic.CheckPin(persona);
                 });
 
                 return Ok(new BaseResponse<PersonaDto>(
@@ -79,7 +79,7 @@ namespace PortaleRegione.API.Controllers
                     model.size,
                     personaDtos,
                     model.filtro,
-                    _logic.Count(model),
+                    await _logic.Count(model),
                     Request.RequestUri));
             }
             catch (Exception e)
@@ -100,7 +100,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var persona = _logic.GetPersona(id);
+                var persona = await _logic.GetPersona(id);
 
                 var intranetAdService = new proxyAD();
 
@@ -111,7 +111,7 @@ namespace PortaleRegione.API.Controllers
                 foreach (var group in Gruppi_Utente)
                     lRuoli.Add($"CONSIGLIO\\{group}");
 
-                var personaResult = _logic.GetPersona(persona, lRuoli);
+                var personaResult = await _logic.GetPersona(persona, lRuoli);
 
                 return Ok(personaResult);
             }
@@ -132,7 +132,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var currentUser = _logic.GetPersona(SessionManager.Persona.UID_persona);
+                var currentUser = await _logic.GetPersona((await GetSession()).UID_persona);
                 var ruoli = await _logic.GetRuoliAD(currentUser.CurrentRole == RuoliIntEnum.Amministratore_PEM);
 
                 return Ok(ruoli);
@@ -155,7 +155,8 @@ namespace PortaleRegione.API.Controllers
             try
             {
                 var gruppiPoliticiAD =
-                    await _logic.GetGruppiPoliticiAD(SessionManager.Persona.CurrentRole == RuoliIntEnum.Amministratore_PEM);
+                    await _logic.GetGruppiPoliticiAD(
+                        (await GetSession()).CurrentRole == RuoliIntEnum.Amministratore_PEM);
 
                 return Ok(gruppiPoliticiAD);
             }

@@ -62,7 +62,8 @@ namespace PortaleRegione.API.Controllers
             {
                 object CLIENT_MODE;
                 model.param.TryGetValue("CLIENT_MODE", out CLIENT_MODE); // per trattazione aula
-                var result = _logic.GetAtti(model, Convert.ToInt16(CLIENT_MODE), SessionManager.Persona,
+                var persona = await GetSession();
+                var result = await _logic.GetAtti(model, Convert.ToInt16(CLIENT_MODE), persona,
                     Request.RequestUri);
                 return Ok(result);
             }
@@ -82,13 +83,13 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var attoInDB = _logic.GetAtto(id);
+                var attoInDB = await _logic.GetAtto(id);
 
                 if (attoInDB == null)
                     return NotFound();
 
                 var result = Mapper.Map<ATTI, AttiDto>(attoInDB);
-                result.Relatori = _logicPersone.GetRelatori(result.UIDAtto)
+                result.Relatori = (await _logicPersone.GetRelatori(result.UIDAtto))
                     .Select(Mapper.Map<PersonaDto, PersonaLightDto>);
 
                 return Ok(result);
@@ -114,7 +115,7 @@ namespace PortaleRegione.API.Controllers
                 if (id == Guid.Empty)
                     return BadRequest();
 
-                var attoInDb = _logic.GetAtto(id);
+                var attoInDb = await _logic.GetAtto(id);
 
                 if (attoInDb == null)
                     return NotFound();
@@ -149,7 +150,7 @@ namespace PortaleRegione.API.Controllers
                     return BadRequest("Impossibile settare una data di chiusura inferiore alla data di apertura");
 
                 var atto = Mapper.Map<AttiFormUpdateModel, ATTI>(attoModel);
-                var nuovoAtto = await _logic.NuovoAtto(atto, SessionManager.Persona);
+                var nuovoAtto = await _logic.NuovoAtto(atto, await GetSession());
                 return Created(new Uri(Request.RequestUri.ToString()), Mapper.Map<ATTI, AttiDto>(nuovoAtto));
             }
             catch (Exception e)
@@ -171,7 +172,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var attoInDb = _logic.GetAtto(attoModel.UIDAtto);
+                var attoInDb = await _logic.GetAtto(attoModel.UIDAtto);
 
                 if (attoInDb == null)
                     return NotFound();
@@ -179,7 +180,7 @@ namespace PortaleRegione.API.Controllers
                 if (attoModel.Data_chiusura <= attoModel.Data_apertura)
                     return BadRequest("Impossibile settare una data di chiusura inferiore alla data di apertura");
 
-                await _logic.SalvaAtto(attoInDb, attoModel, SessionManager.Persona);
+                await _logic.SalvaAtto(attoInDb, attoModel, await GetSession());
 
                 return Ok(Mapper.Map<ATTI, AttiDto>(attoInDb));
             }
@@ -201,7 +202,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var attoInDb = _logic.GetAtto(atto.UIDAtto);
+                var attoInDb = await _logic.GetAtto(atto.UIDAtto);
 
                 if (attoInDb == null)
                     return NotFound();
@@ -227,8 +228,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var articoliDtos = _logic.GetArticoli(id);
-                ;
+                var articoliDtos = await _logic.GetArticoli(id);
 
                 return Ok(articoliDtos);
             }
@@ -273,18 +273,18 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var articolo = _logic.GetArticolo(id);
+                var articolo = await _logic.GetArticolo(id);
                 if (articolo == null)
                     return NotFound();
 
                 await _logic.DeleteArticolo(articolo);
 
-                var listCommi = _logic.GetCommi(id);
+                var listCommi = await _logic.GetCommi(id);
                 await _logic.DeleteCommi(listCommi);
 
                 foreach (var comma in listCommi)
                 {
-                    var listLettere = _logic.GetLettere(comma.UIDComma);
+                    var listLettere = await _logic.GetLettere(comma.UIDComma);
                     await _logic.DeleteLettere(listLettere);
                 }
 
@@ -307,7 +307,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var commiDtos = _logic.GetCommi(id).Select(Mapper.Map<COMMI, CommiDto>);
+                var commiDtos = (await _logic.GetCommi(id)).Select(Mapper.Map<COMMI, CommiDto>);
 
                 return Ok(commiDtos);
             }
@@ -330,7 +330,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var articolo = _logic.GetArticolo(id);
+                var articolo = await _logic.GetArticolo(id);
                 if (articolo == null)
                     return NotFound();
 
@@ -355,13 +355,13 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var comma = _logic.GetComma(id);
+                var comma = await _logic.GetComma(id);
                 if (comma == null)
                     return NotFound();
 
                 await _logic.DeleteComma(comma);
 
-                var listLettere = _logic.GetLettere(comma.UIDComma);
+                var listLettere = await _logic.GetLettere(comma.UIDComma);
                 await _logic.DeleteLettere(listLettere);
 
                 return Ok("OK");
@@ -383,7 +383,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var lettereDtos = _logic.GetLettere(id).Select(Mapper.Map<LETTERE, LettereDto>);
+                var lettereDtos = (await _logic.GetLettere(id)).Select(Mapper.Map<LETTERE, LettereDto>);
 
                 return Ok(lettereDtos);
             }
@@ -406,7 +406,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var comma = _logic.GetComma(id);
+                var comma = await _logic.GetComma(id);
                 if (comma == null)
                     return NotFound();
 
@@ -432,7 +432,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var lettera = _logic.GetLettera(id);
+                var lettera = await _logic.GetLettera(id);
                 if (lettera == null)
                     return NotFound();
 
@@ -459,7 +459,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var attoInDb = _logic.GetAtto(model.Id);
+                var attoInDb = await _logic.GetAtto(model.Id);
 
                 if (attoInDb == null)
                     return NotFound();
@@ -487,12 +487,12 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var attoInDb = _logic.GetAtto(model.Id);
+                var attoInDb = await _logic.GetAtto(model.Id);
 
                 if (attoInDb == null)
                     return NotFound();
-
-                await _logic.PubblicaFascicolo(attoInDb, model, SessionManager.Persona);
+                var persona = await GetSession();
+                await _logic.PubblicaFascicolo(attoInDb, model, persona);
 
                 if (model.Abilita)
                     await _logicStampe.InserisciStampa(new BaseRequest<EmendamentiDto, StampaDto>
@@ -504,7 +504,7 @@ namespace PortaleRegione.API.Controllers
                             A = 0,
                             Ordine = (int) model.Ordinamento
                         }
-                    }, SessionManager.Persona);
+                    }, persona);
 
                 return Ok();
             }

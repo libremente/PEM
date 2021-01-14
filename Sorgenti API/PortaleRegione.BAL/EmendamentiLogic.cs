@@ -72,7 +72,7 @@ namespace PortaleRegione.BAL
                 var progressivo = persona.CurrentRole == RuoliIntEnum.Amministratore_PEM
                                   || persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea
                     ? 1
-                    : _unitOfWork.Emendamenti.GetProgressivo(atto.UIDAtto,
+                    : await _unitOfWork.Emendamenti.GetProgressivo(atto.UIDAtto,
                         persona.Gruppo.id_gruppo, sub_em);
 
                 if (sub_em)
@@ -96,7 +96,7 @@ namespace PortaleRegione.BAL
 
                 emendamento.DisplayTitle = GetNomeEM(emendamento,
                     emendamento.Rif_UIDEM.HasValue
-                        ? Mapper.Map<EM, EmendamentiDto>(GetEM(emendamento.Rif_UIDEM.Value))
+                        ? Mapper.Map<EM, EmendamentiDto>(await GetEM(emendamento.Rif_UIDEM.Value))
                         : null);
 
                 if (persona.CurrentRole == RuoliIntEnum.Consigliere_Regionale ||
@@ -116,17 +116,17 @@ namespace PortaleRegione.BAL
                         || persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea)
                     {
                         result.ListaConsiglieri =
-                            _logicPersone.GetConsiglieri();
-                        result.ListaAssessori = _logicPersone
+                            await _logicPersone.GetConsiglieri();
+                        result.ListaAssessori = await _logicPersone
                             .GetAssessoriRiferimento();
                     }
                     else
                     {
                         if (isGiunta)
-                            result.ListaGruppo = _logicPersone
+                            result.ListaGruppo = await _logicPersone
                                 .GetAssessoriRiferimento();
                         else
-                            result.ListaGruppo = _logicPersone.GetConsiglieriGruppo(persona.Gruppo.id_gruppo);
+                            result.ListaGruppo = await _logicPersone.GetConsiglieriGruppo(persona.Gruppo.id_gruppo);
                     }
                 }
 
@@ -141,9 +141,9 @@ namespace PortaleRegione.BAL
 
                 result.ListaPartiEmendabili = await GetPartiEM();
                 result.ListaTipiEmendamento = await GetTipiEM();
-                result.ListaMissioni = GetMissioni();
-                result.ListaTitoli_Missioni = GetTitoliMissioni();
-                result.ListaArticoli = GetArticoli(atto.UIDAtto);
+                result.ListaMissioni = await GetMissioni();
+                result.ListaTitoli_Missioni = await GetTitoliMissioni();
+                result.ListaArticoli = await GetArticoli(atto.UIDAtto);
 
                 result.Emendamento = emendamento;
 
@@ -174,34 +174,28 @@ namespace PortaleRegione.BAL
                         || persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea)
                     {
                         result.ListaConsiglieri =
-                            _unitOfWork.Persone.GetConsiglieri(_unitOfWork.Legislature.Legislatura_Attiva())
+                            (await _unitOfWork.Persone.GetConsiglieri(await _unitOfWork.Legislature.Legislatura_Attiva()))
                                 .Select(Mapper.Map<View_UTENTI, PersonaDto>);
-                        result.ListaAssessori = _unitOfWork.Persone
-                            .GetAssessoriRiferimento(_unitOfWork.Legislature.Legislatura_Attiva())
+                        result.ListaAssessori = (await _unitOfWork.Persone
+                            .GetAssessoriRiferimento(await _unitOfWork.Legislature.Legislatura_Attiva()))
                             .Select(Mapper.Map<View_UTENTI, PersonaDto>);
                         result.ListaAreaPolitica = Utility.GetEnumList<AreaPoliticaIntEnum>();
                     }
                     else
                     {
-                        result.ListaGruppo = _unitOfWork.Gruppi.GetConsiglieriGruppo(
-                                _unitOfWork.Legislature.Legislatura_Attiva(), persona.Gruppo.id_gruppo)
+                        result.ListaGruppo = (await _unitOfWork.Gruppi.GetConsiglieriGruppo(
+                                await _unitOfWork.Legislature.Legislatura_Attiva(), persona.Gruppo.id_gruppo))
                             .Select(Mapper.Map<View_UTENTI, PersonaDto>);
                     }
                 }
 
                 result.ListaPartiEmendabili = await GetPartiEM();
                 result.ListaTipiEmendamento = await GetTipiEM();
-                result.ListaMissioni = _unitOfWork
-                    .Emendamenti
-                    .GetMissioniEmendamento()
-                    .Select(Mapper.Map<MISSIONI, MissioniDto>);
-                result.ListaTitoli_Missioni = _unitOfWork
-                    .Emendamenti
-                    .GetTitoliMissioneEmendamento()
-                    .Select(Mapper.Map<TITOLI_MISSIONI, TitoloMissioniDto>);
-                result.ListaArticoli = _unitOfWork
+                result.ListaMissioni = await GetMissioni();
+                result.ListaTitoli_Missioni = await GetTitoliMissioni();
+                result.ListaArticoli = (await _unitOfWork
                     .Articoli
-                    .GetArticoli(em.UIDAtto)
+                    .GetArticoli(em.UIDAtto))
                     .Select(Mapper.Map<ARTICOLI, ArticoliDto>);
 
                 return result;
@@ -222,7 +216,7 @@ namespace PortaleRegione.BAL
             try
             {
                 var progressivo =
-                    _unitOfWork.Emendamenti.GetProgressivo(emendamentoDto.UIDAtto,
+                   await _unitOfWork.Emendamenti.GetProgressivo(emendamentoDto.UIDAtto,
                         persona.Gruppo.id_gruppo,
                         emendamentoDto.Rif_UIDEM.HasValue);
                 if (emendamentoDto.Rif_UIDEM.HasValue)
@@ -259,7 +253,7 @@ namespace PortaleRegione.BAL
                 var updateDto = Mapper.Map<EmendamentiDto, EmendamentoLightDto>(model);
                 Mapper.Map(updateDto, em);
 
-                var countFirme = _unitOfWork.Firme.CountFirme(model.UIDEM);
+                var countFirme = await _unitOfWork.Firme.CountFirme(model.UIDEM);
 
                 if (!string.IsNullOrEmpty(em.EM_Certificato) && countFirme == 1)
                 {
@@ -334,19 +328,19 @@ namespace PortaleRegione.BAL
 
         #region GetInvitati
 
-        public IEnumerable<DestinatariNotificaDto> GetInvitati(EM em)
+        public async Task<IEnumerable<DestinatariNotificaDto>> GetInvitati(EM em)
         {
             try
             {
-                var result = _unitOfWork
+                var result = (await _unitOfWork
                     .Emendamenti
-                    .GetInvitati(em.UIDEM)
+                    .GetInvitati(em.UIDEM))
                     .Select(Mapper.Map<NOTIFICHE_DESTINATARI, DestinatariNotificaDto>)
                     .ToList();
 
-                result.ForEach(destinatario =>
+                result.ForEach(async destinatario =>
                 {
-                    destinatario.Firmato = _unitOfWork
+                    destinatario.Firmato = await _unitOfWork
                         .Firme
                         .CheckFirmato(destinatario.NOTIFICHE.UIDEM, destinatario.UIDPersona);
                 });
@@ -459,7 +453,7 @@ namespace PortaleRegione.BAL
 
                 foreach (var idGuid in firmaModel.ListaEmendamenti)
                 {
-                    var em = GetEM(idGuid);
+                    var em = await GetEM(idGuid);
                     if (em == null)
                     {
                         results.Add(idGuid, "ERROR: NON TROVATO");
@@ -468,7 +462,7 @@ namespace PortaleRegione.BAL
 
                     var n_em = GetNomeEM(Mapper.Map<EM, EmendamentiDto>(em),
                         em.Rif_UIDEM.HasValue
-                            ? Mapper.Map<EM, EmendamentiDto>(GetEM(em.Rif_UIDEM.Value))
+                            ? Mapper.Map<EM, EmendamentiDto>(await GetEM(em.Rif_UIDEM.Value))
                             : null);
 
                     if (em.STATI_EM.IDStato > (int) StatiEnum.Depositato)
@@ -478,7 +472,7 @@ namespace PortaleRegione.BAL
 
                     if (firmaUfficio)
                     {
-                        var firmato_ufficio = _unitOfWork.Firme.CheckFirmatoDaUfficio(idGuid);
+                        var firmato_ufficio = await _unitOfWork.Firme.CheckFirmatoDaUfficio(idGuid);
 
                         //Controllo se l'utente ha già firmato
                         if (firmato_ufficio)
@@ -492,7 +486,7 @@ namespace PortaleRegione.BAL
                     }
                     else
                     {
-                        var firmato_utente = _unitOfWork.Firme.CheckFirmato(idGuid, persona.UID_persona);
+                        var firmato_utente = await _unitOfWork.Firme.CheckFirmato(idGuid, persona.UID_persona);
 
                         //Controllo se l'utente ha già firmato
                         if (firmato_utente)
@@ -503,7 +497,7 @@ namespace PortaleRegione.BAL
 
                         var firmato_dal_proponente = em.STATI_EM.IDStato >= (int) StatiEnum.Depositato
                             ? true
-                            : _unitOfWork.Firme.CheckFirmato(em.UIDEM, em.UIDPersonaProponente.Value);
+                            : await _unitOfWork.Firme.CheckFirmato(em.UIDEM, em.UIDPersonaProponente.Value);
 
                         //Controllo la firma del proponente
                         if (!firmato_dal_proponente && em.UIDPersonaProponente.Value != persona.UID_persona)
@@ -523,8 +517,8 @@ namespace PortaleRegione.BAL
                                 break;
                         }
 
-                        var isRelatore = _unitOfWork.Persone.IsRelatore(persona.UID_persona, em.ATTI.UIDAtto);
-                        var isAssessore = _unitOfWork.Persone.IsAssessore(persona.UID_persona, em.ATTI.UIDAtto);
+                        var isRelatore = await _unitOfWork.Persone.IsRelatore(persona.UID_persona, em.ATTI.UIDAtto);
+                        var isAssessore = await _unitOfWork.Persone.IsAssessore(persona.UID_persona, em.ATTI.UIDAtto);
 
                         var bodyFirmaCert =
                             $"{persona.DisplayName} ({info_codice_carica_gruppo}){(isRelatore ? " - RELATORE" : string.Empty)}{(isAssessore ? " - Ass. capofila" : string.Empty)}";
@@ -535,7 +529,7 @@ namespace PortaleRegione.BAL
                     var dataFirma = EncryptString(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"),
                         AppSettingsConfiguration.masterKey);
 
-                    var countFirme = _unitOfWork.Firme.CountFirme(idGuid);
+                    var countFirme = await _unitOfWork.Firme.CountFirme(idGuid);
                     if (countFirme == 0)
                     {
                         //Se è la prima firma dell'emendamento, questo viene cryptato e così certificato e non modificabile
@@ -590,7 +584,7 @@ namespace PortaleRegione.BAL
 
                 foreach (var idGuid in firmaModel.ListaEmendamenti)
                 {
-                    var em = GetEM(idGuid);
+                    var em = await GetEM(idGuid);
                     if (em == null)
                     {
                         results.Add(idGuid, "ERROR: NON TROVATO");
@@ -599,13 +593,13 @@ namespace PortaleRegione.BAL
 
                     var n_em = GetNomeEM(Mapper.Map<EM, EmendamentiDto>(em),
                         em.Rif_UIDEM.HasValue
-                            ? Mapper.Map<EM, EmendamentiDto>(GetEM(em.Rif_UIDEM.Value))
+                            ? Mapper.Map<EM, EmendamentiDto>(await GetEM(em.Rif_UIDEM.Value))
                             : null);
 
-                    var seduta = _unitOfWork.Sedute.Get(em.ATTI.UIDSeduta.Value);
+                    var seduta = await _unitOfWork.Sedute.Get(em.ATTI.UIDSeduta.Value);
 
-                    var ruoloSegreterie = _unitOfWork.Ruoli.Get((int) RuoliIntEnum.Segreteria_Assemblea);
-                    var countFirme = _unitOfWork.Firme.CountFirme(idGuid);
+                    var ruoloSegreterie = await _unitOfWork.Ruoli.Get((int) RuoliIntEnum.Segreteria_Assemblea);
+                    var countFirme = await _unitOfWork.Firme.CountFirme(idGuid);
                     if (countFirme == 1)
                     {
                         if (DateTime.Now > seduta.Data_seduta)
@@ -634,7 +628,7 @@ namespace PortaleRegione.BAL
                     }
 
                     //RITIRA FIRMA
-                    var firmeAttive = _unitOfWork
+                    var firmeAttive = await _unitOfWork
                         .Firme
                         .GetFirmatari(em, FirmeTipoEnum.ATTIVI);
                     FIRME firma_utente;
@@ -685,14 +679,14 @@ namespace PortaleRegione.BAL
 
                 foreach (var idGuid in firmaModel.ListaEmendamenti)
                 {
-                    var em = GetEM(idGuid);
+                    var em = await GetEM(idGuid);
                     if (em == null)
                     {
                         results.Add(idGuid, "ERROR: NON TROVATO");
                         continue;
                     }
 
-                    var countFirme = _unitOfWork.Firme.CountFirme(idGuid);
+                    var countFirme = await _unitOfWork.Firme.CountFirme(idGuid);
                     if (countFirme == 1)
                     {
                         em.EM_Certificato = string.Empty;
@@ -701,7 +695,7 @@ namespace PortaleRegione.BAL
                     }
 
                     //RITIRA FIRMA
-                    var firmeAttive = _logicFirme.GetFirme(em, FirmeTipoEnum.ATTIVI);
+                    var firmeAttive = await _logicFirme.GetFirme(em, FirmeTipoEnum.ATTIVI);
                     var firma_utente = firmeAttive.Single(f => f.UID_persona == persona.UID_persona);
 
                     _unitOfWork.Firme.Remove(firma_utente);
@@ -733,7 +727,7 @@ namespace PortaleRegione.BAL
                 BloccaDepositi = true;
                 foreach (var idGuid in depositoModel.ListaEmendamenti)
                 {
-                    var em = GetEM(idGuid);
+                    var em = await GetEM(idGuid);
                     if (em == null)
                     {
                         results.Add(idGuid, "ERROR: NON TROVATO");
@@ -748,7 +742,7 @@ namespace PortaleRegione.BAL
                         continue;
                     }
 
-                    var depositabile = _unitOfWork.Emendamenti.CheckIfDepositabile(emDto, persona);
+                    var depositabile = await _unitOfWork.Emendamenti.CheckIfDepositabile(emDto, persona);
                     if (!depositabile)
                     {
                         results.Add(idGuid, $"ERROR: Emendamento {n_em} non depositabile");
@@ -756,12 +750,12 @@ namespace PortaleRegione.BAL
                     }
 
                     var etichetta_progressiva =
-                        _unitOfWork.Emendamenti.GetEtichetta(emDto.UIDAtto, emDto.Rif_UIDEM.HasValue) + 1;
+                        await _unitOfWork.Emendamenti.GetEtichetta(emDto.UIDAtto, emDto.Rif_UIDEM.HasValue) + 1;
                     var etichetta_encrypt =
                         EncryptString(etichetta_progressiva.ToString(), AppSettingsConfiguration.masterKey);
 
                     var checkProgressivo_unique =
-                        _unitOfWork.Emendamenti.CheckProgressivo(emDto.UIDAtto, etichetta_encrypt,
+                        await _unitOfWork.Emendamenti.CheckProgressivo(emDto.UIDAtto, etichetta_encrypt,
                             emDto.Rif_UIDEM.HasValue ? CounterEmendamentiEnum.SUB_EM : CounterEmendamentiEnum.EM);
 
                     if (!checkProgressivo_unique)
@@ -838,9 +832,9 @@ namespace PortaleRegione.BAL
                     var nome_em = GetNomeEM(
                         Mapper.Map<EM, EmendamentiDto>(em),
                         em.Rif_UIDEM.HasValue
-                            ? Mapper.Map<EM, EmendamentiDto>(GetEM(em.Rif_UIDEM.Value))
+                            ? Mapper.Map<EM, EmendamentiDto>(await GetEM(em.Rif_UIDEM.Value))
                             : null);
-                    var ruoloSegreterie = _unitOfWork.Ruoli.Get(10);
+                    var ruoloSegreterie = await _unitOfWork.Ruoli.Get(10);
                     _logicUtil.InvioMail(new MailModel
                     {
                         DA = "pem@consiglio.regione.lombardia.it",
@@ -876,7 +870,7 @@ namespace PortaleRegione.BAL
 
                 foreach (var idGuid in model.ListaEmendamenti)
                 {
-                    var em = GetEM(idGuid);
+                    var em = await GetEM(idGuid);
                     if (em == null)
                     {
                         results.Add(idGuid, "ERROR: NON TROVATO");
@@ -892,14 +886,14 @@ namespace PortaleRegione.BAL
                         if (AppSettingsConfiguration.AbilitaOpenData == "1")
                         {
                             var wsOD = new UpsertOpenData();
-                            var firme = _logicFirme.GetFirme(em, FirmeTipoEnum.TUTTE);
+                            var firme = await _logicFirme.GetFirme(em, FirmeTipoEnum.TUTTE);
                             var firmeDto = firme.Select(Mapper.Map<FIRME, FirmeDto>).ToList();
 
                             var resultOpenData = GetEM_OPENDATA(em,
-                                em.Rif_UIDEM.HasValue ? GetEM(em.Rif_UIDEM.Value) : null,
+                                em.Rif_UIDEM.HasValue ? await GetEM(em.Rif_UIDEM.Value) : null,
                                 firmeDto,
                                 Mapper.Map<View_UTENTI, PersonaDto>(
-                                    _unitOfWork.Persone.Get(em.UIDPersonaProponente.Value)));
+                                    await _unitOfWork.Persone.Get(em.UIDPersonaProponente.Value)));
                             wsOD.UpsertEM(resultOpenData, AppSettingsConfiguration.OpenData_PrivateToken);
                         }
                     }
@@ -955,11 +949,11 @@ namespace PortaleRegione.BAL
         ///     Ritorna la lista delle missioni nel db
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<MissioniDto> GetMissioni()
+        public async Task<IEnumerable<MissioniDto>> GetMissioni()
         {
-            return _unitOfWork
+            return (await _unitOfWork
                 .Emendamenti
-                .GetMissioniEmendamento()
+                .GetMissioniEmendamento())
                 .Select(Mapper.Map<MISSIONI, MissioniDto>);
         }
 
@@ -971,11 +965,11 @@ namespace PortaleRegione.BAL
         ///     Ritorna la lista dei titoli missioni nel db
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<TitoloMissioniDto> GetTitoliMissioni()
+        public async Task<IEnumerable<TitoloMissioniDto>> GetTitoliMissioni()
         {
-            return _unitOfWork
+            return (await _unitOfWork
                 .Emendamenti
-                .GetTitoliMissioneEmendamento()
+                .GetTitoliMissioneEmendamento())
                 .Select(Mapper.Map<TITOLI_MISSIONI, TitoloMissioniDto>);
         }
 
@@ -1004,11 +998,11 @@ namespace PortaleRegione.BAL
         /// </summary>
         /// <param name="atto"></param>
         /// <returns></returns>
-        public IEnumerable<ArticoliDto> GetArticoli(Guid atto)
+        public async Task<IEnumerable<ArticoliDto>> GetArticoli(Guid atto)
         {
-            return _unitOfWork
+            return (await _unitOfWork
                 .Articoli
-                .GetArticoli(atto)
+                .GetArticoli(atto))
                 .Select(Mapper.Map<ARTICOLI, ArticoliDto>);
         }
 
@@ -1016,15 +1010,15 @@ namespace PortaleRegione.BAL
 
         #region GetEM
 
-        public EM GetEM(Guid id)
+        public async Task<EM> GetEM(Guid id)
         {
-            return _unitOfWork.Emendamenti.Get(id);
+            return await _unitOfWork.Emendamenti.Get(id);
         }
 
-        public EM GetEM(string id)
+        public async Task<EM> GetEM(string id)
         {
             var guidId = new Guid(id);
-            return GetEM(guidId);
+            return await GetEM(guidId);
         }
 
         #endregion
@@ -1033,7 +1027,7 @@ namespace PortaleRegione.BAL
 
         public async Task<EmendamentiDto> GetEM_DTO(Guid emendamentoUId, PersonaDto persona)
         {
-            var em = GetEM(emendamentoUId);
+            var em = await GetEM(emendamentoUId);
             return await GetEM_DTO(em, persona);
         }
 
@@ -1055,22 +1049,22 @@ namespace PortaleRegione.BAL
                                               persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea;
                 emendamentoDto.DisplayTitle = GetNomeEM(emendamentoDto,
                     emendamentoDto.Rif_UIDEM.HasValue
-                        ? Mapper.Map<EM, EmendamentiDto>(GetEM(emendamentoDto.Rif_UIDEM.Value))
+                        ? Mapper.Map<EM, EmendamentiDto>(await GetEM(emendamentoDto.Rif_UIDEM.Value))
                         : null);
-                emendamentoDto.ConteggioFirme = _logicFirme.CountFirme(emendamentoDto.UIDEM);
+                emendamentoDto.ConteggioFirme = await _logicFirme.CountFirme(emendamentoDto.UIDEM);
                 if (!string.IsNullOrEmpty(emendamentoDto.DataDeposito))
                     emendamentoDto.DataDeposito = Decrypt(emendamentoDto.DataDeposito);
                 if (!string.IsNullOrEmpty(emendamentoDto.EM_Certificato))
                     emendamentoDto.EM_Certificato = Decrypt(emendamentoDto.EM_Certificato, em.Hash);
-                emendamentoDto.Firma_da_ufficio = _unitOfWork.Firme.CheckFirmatoDaUfficio(emendamentoDto.UIDEM);
+                emendamentoDto.Firma_da_ufficio = await _unitOfWork.Firme.CheckFirmatoDaUfficio(emendamentoDto.UIDEM);
                 emendamentoDto.Firmato_Dal_Proponente = em.STATI_EM.IDStato >= (int) StatiEnum.Depositato
                     ? true
-                    : _unitOfWork.Firme.CheckFirmato(em.UIDEM, em.UIDPersonaProponente.Value);
+                    : await _unitOfWork.Firme.CheckFirmato(em.UIDEM, em.UIDPersonaProponente.Value);
                 if (persona.CurrentRole == RuoliIntEnum.Amministratore_PEM ||
                     persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea)
                     if (emendamentoDto.ConteggioFirme > 1)
                     {
-                        var firme = _logicFirme.GetFirme(emendamentoDto, FirmeTipoEnum.ATTIVI);
+                        var firme = await _logicFirme.GetFirme(emendamentoDto, FirmeTipoEnum.ATTIVI);
                         emendamentoDto.Firme = firme
                             .Where(f => f.UID_persona != emendamentoDto.UIDPersonaProponente)
                             .Select(f => f.FirmaCert)
@@ -1078,13 +1072,13 @@ namespace PortaleRegione.BAL
                     }
 
                 if (string.IsNullOrEmpty(em.DataDeposito))
-                    emendamentoDto.Depositabile = _unitOfWork
+                    emendamentoDto.Depositabile = await _unitOfWork
                         .Emendamenti
                         .CheckIfDepositabile(emendamentoDto,
                             persona);
 
                 if (em.STATI_EM.IDStato <= (int) StatiEnum.Depositato)
-                    emendamentoDto.Firmabile = _unitOfWork
+                    emendamentoDto.Firmabile = await _unitOfWork
                         .Firme
                         .CheckIfFirmabile(emendamentoDto,
                             persona);
@@ -1099,7 +1093,7 @@ namespace PortaleRegione.BAL
                         .CheckIfEliminabile(emendamentoDto,
                             persona);
 
-                emendamentoDto.Modificabile = _unitOfWork
+                emendamentoDto.Modificabile = await _unitOfWork
                     .Emendamenti
                     .CheckIfModificabile(emendamentoDto,
                         persona);
@@ -1111,19 +1105,19 @@ namespace PortaleRegione.BAL
 
                 emendamentoDto.PersonaProponente =
                     Mapper.Map<View_UTENTI, PersonaLightDto>(
-                        _unitOfWork.Persone.Get(emendamentoDto.UIDPersonaProponente.Value));
+                        await _unitOfWork.Persone.Get(emendamentoDto.UIDPersonaProponente.Value));
                 emendamentoDto.PersonaCreazione =
                     Mapper.Map<View_UTENTI, PersonaLightDto>(
-                        _unitOfWork.Persone.Get(emendamentoDto.UIDPersonaCreazione.Value));
+                        await _unitOfWork.Persone.Get(emendamentoDto.UIDPersonaCreazione.Value));
                 if (!string.IsNullOrEmpty(emendamentoDto.DataDeposito))
                     emendamentoDto.PersonaDeposito =
                         Mapper.Map<View_UTENTI, PersonaLightDto>(
-                            _unitOfWork.Persone.Get(emendamentoDto.UIDPersonaDeposito.Value));
+                            await _unitOfWork.Persone.Get(emendamentoDto.UIDPersonaDeposito.Value));
 
                 if (emendamentoDto.UIDPersonaModifica.HasValue)
                     emendamentoDto.PersonaModifica =
                         Mapper.Map<View_UTENTI, PersonaLightDto>(
-                            _unitOfWork.Persone.Get(emendamentoDto.UIDPersonaModifica.Value));
+                            await _unitOfWork.Persone.Get(emendamentoDto.UIDPersonaModifica.Value));
 
                 return emendamentoDto;
             }
@@ -1150,7 +1144,7 @@ namespace PortaleRegione.BAL
                         EncryptString(filterStatement.Value.ToString(), AppSettingsConfiguration.masterKey);
                 queryFilter.ImportStatements(model.filtro);
 
-                var emendamentiDtos = _unitOfWork
+                var emendamentiDtos = await _unitOfWork
                     .Emendamenti
                     .GetAll(model.id,
                         persona,
@@ -1158,8 +1152,7 @@ namespace PortaleRegione.BAL
                         model.page,
                         model.size,
                         CLIENT_MODE,
-                        queryFilter)
-                    .ToList();
+                        queryFilter);
                 var result = new List<EmendamentiDto>();
                 foreach (var emendamentoUId in emendamentiDtos) result.Add(await GetEM_DTO(emendamentoUId, persona));
 
@@ -1182,11 +1175,11 @@ namespace PortaleRegione.BAL
                     .Select(Mapper.Map<EM, EmendamentiDto>)
                     .ToList();
 
-                emendamentiDtos.ForEach(delegate(EmendamentiDto em)
+                emendamentiDtos.ForEach(async delegate(EmendamentiDto em)
                 {
                     em.DisplayTitle = GetNomeEM(em,
                         em.Rif_UIDEM.HasValue
-                            ? Mapper.Map<EM, EmendamentiDto>(GetEM(em.Rif_UIDEM.Value))
+                            ? Mapper.Map<EM, EmendamentiDto>(await GetEM(em.Rif_UIDEM.Value))
                             : null);
                     em.DataDeposito = !string.IsNullOrEmpty(em.DataDeposito) ? Decrypt(em.DataDeposito) : "";
                 });
@@ -1204,7 +1197,7 @@ namespace PortaleRegione.BAL
 
         #region CountEM
 
-        public int CountEM(BaseRequest<EmendamentiDto> model, PersonaDto persona, int CLIENT_MODE,
+        public async Task<int> CountEM(BaseRequest<EmendamentiDto> model, PersonaDto persona, int CLIENT_MODE,
             CounterEmendamentiEnum type = CounterEmendamentiEnum.NONE)
         {
             try
@@ -1212,7 +1205,7 @@ namespace PortaleRegione.BAL
                 var queryFilter = new Filter<EM>();
                 queryFilter.ImportStatements(model.filtro);
 
-                return _unitOfWork.Emendamenti.Count(model.id,
+                return await _unitOfWork.Emendamenti.Count(model.id,
                     persona, type, CLIENT_MODE, queryFilter);
             }
             catch (Exception e)
@@ -1222,11 +1215,11 @@ namespace PortaleRegione.BAL
             }
         }
 
-        public int CountEM(string query)
+        public async Task<int> CountEM(string query)
         {
             try
             {
-                return _unitOfWork.Emendamenti.Count(query);
+                return await _unitOfWork.Emendamenti.Count(query);
             }
             catch (Exception e)
             {

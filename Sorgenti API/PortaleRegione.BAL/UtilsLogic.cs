@@ -81,12 +81,12 @@ namespace PortaleRegione.BAL
                 switch (tipoDoc)
                 {
                     case TipoAllegatoEnum.ATTO:
-                        var atto = _unitOfWork.Atti.Get(proprietarioId);
+                        var atto = await _unitOfWork.Atti.Get(proprietarioId);
                         atto.Path_Testo_Atto = pathFile;
                         break;
                     case TipoAllegatoEnum.EMENDAMENTO_GENERICO:
                     case TipoAllegatoEnum.EMENDAMENTO_TECNICO:
-                        var em = _unitOfWork.Emendamenti.Get(proprietarioId);
+                        var em = await _unitOfWork.Emendamenti.Get(proprietarioId);
 
                         switch (tipoDoc)
                         {

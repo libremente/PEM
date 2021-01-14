@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using ExpressionBuilder.Generics;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
@@ -37,12 +39,13 @@ namespace PortaleRegione.Persistance
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
 
-        public SEDUTE Get(Guid sedutaUId)
+        public async Task<SEDUTE> Get(Guid sedutaUId)
         {
-            return PRContext.SEDUTE.Find(sedutaUId);
+            return await PRContext.SEDUTE.FindAsync(sedutaUId);
         }
 
-        public IEnumerable<SEDUTE> GetAll(int legislaturaId, int pageIndex, int pageSize, Filter<SEDUTE> filtro = null)
+        public async Task<IEnumerable<SEDUTE>> GetAll(int legislaturaId, int pageIndex, int pageSize,
+            Filter<SEDUTE> filtro = null)
         {
             var query = PRContext.SEDUTE.Where(c => c.Eliminato == false || !c.Eliminato.HasValue);
 
@@ -51,13 +54,13 @@ namespace PortaleRegione.Persistance
             else
                 filtro.BuildExpression(ref query);
 
-            return query.OrderByDescending(c => c.Data_seduta)
+            return await query.OrderByDescending(c => c.Data_seduta)
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
         }
 
-        public int Count(int legislaturaId, Filter<SEDUTE> filtro = null)
+        public async Task<int> Count(int legislaturaId, Filter<SEDUTE> filtro = null)
         {
             var query = PRContext.SEDUTE
                 .Where(c => c.Eliminato == false || !c.Eliminato.HasValue);
@@ -67,7 +70,7 @@ namespace PortaleRegione.Persistance
             else
                 filtro.BuildExpression(ref query);
 
-            return query.Count();
+            return await query.CountAsync();
         }
     }
 }

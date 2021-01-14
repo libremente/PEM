@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using ExpressionBuilder.Generics;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
@@ -39,19 +41,19 @@ namespace PortaleRegione.Persistance
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
 
-        public NOTIFICHE Get(Guid notificaUId)
+        public async Task<NOTIFICHE> Get(Guid notificaUId)
         {
-            return PRContext.NOTIFICHE.Find(notificaUId);
+            return await PRContext.NOTIFICHE.FindAsync(notificaUId);
         }
 
-        public IEnumerable<NOTIFICHE_DESTINATARI> GetDestinatariNotifica(long notificaId)
+        public async Task<IEnumerable<NOTIFICHE_DESTINATARI>> GetDestinatariNotifica(long notificaId)
         {
             var query = PRContext
                 .NOTIFICHE_DESTINATARI
                 .Where(nd => nd.UIDNotifica == notificaId);
 
-            return query
-                .ToList();
+            return await query
+                .ToListAsync();
         }
 
         public bool CheckIfNotificabile(EmendamentiDto em, PersonaDto persona)
@@ -74,7 +76,8 @@ namespace PortaleRegione.Persistance
             return true;
         }
 
-        public int CountInviate(PersonaDto currentUser, int idGruppo, bool Archivio, Filter<NOTIFICHE> filtro = null)
+        public async Task<int> CountInviate(PersonaDto currentUser, int idGruppo, bool Archivio,
+            Filter<NOTIFICHE> filtro = null)
         {
             var query = PRContext
                 .NOTIFICHE
@@ -104,10 +107,11 @@ namespace PortaleRegione.Persistance
 
             filtro?.BuildExpression(ref query);
 
-            return query.Count();
+            return await query.CountAsync();
         }
 
-        public int CountRicevute(PersonaDto currentUser, int idGruppo, bool Archivio, Filter<NOTIFICHE> filtro = null)
+        public async Task<int> CountRicevute(PersonaDto currentUser, int idGruppo, bool Archivio,
+            Filter<NOTIFICHE> filtro = null)
         {
             var queryDestinatari = PRContext
                 .NOTIFICHE_DESTINATARI
@@ -122,9 +126,9 @@ namespace PortaleRegione.Persistance
             if (idGruppo > 0)
                 queryDestinatari = queryDestinatari.Where(nd => nd.IdGruppo == idGruppo);
 
-            var resultDestinatari = queryDestinatari
+            var resultDestinatari = await queryDestinatari
                 .Select(n => n.UIDNotifica)
-                .ToList();
+                .ToListAsync();
 
             var query = PRContext
                 .NOTIFICHE
@@ -137,10 +141,11 @@ namespace PortaleRegione.Persistance
 
             filtro?.BuildExpression(ref query);
 
-            return query.Count();
+            return await query.CountAsync();
         }
 
-        public IEnumerable<NOTIFICHE> GetNotificheInviate(PersonaDto currentUser, int idGruppo, bool Archivio,
+        public async Task<IEnumerable<NOTIFICHE>> GetNotificheInviate(PersonaDto currentUser, int idGruppo,
+            bool Archivio,
             int pageIndex,
             int pageSize,
             Filter<NOTIFICHE> filtro = null)
@@ -174,13 +179,14 @@ namespace PortaleRegione.Persistance
 
             filtro?.BuildExpression(ref query);
 
-            return query.OrderByDescending(n => n.ATTI.SEDUTE.Scadenza_presentazione)
+            return await query.OrderByDescending(n => n.ATTI.SEDUTE.Scadenza_presentazione)
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
         }
 
-        public IEnumerable<NOTIFICHE> GetNotificheRicevute(PersonaDto currentUser, int idGruppo, bool Archivio,
+        public async Task<IEnumerable<NOTIFICHE>> GetNotificheRicevute(PersonaDto currentUser, int idGruppo,
+            bool Archivio,
             int pageIndex,
             int pageSize,
             Filter<NOTIFICHE> filtro = null)
@@ -198,9 +204,9 @@ namespace PortaleRegione.Persistance
             if (idGruppo > 0)
                 queryDestinatari = queryDestinatari.Where(nd => nd.IdGruppo == idGruppo);
 
-            var resultDestinatari = queryDestinatari
+            var resultDestinatari = await queryDestinatari
                 .Select(n => n.UIDNotifica)
-                .ToList();
+                .ToListAsync();
 
             var query = PRContext
                 .NOTIFICHE
@@ -213,10 +219,10 @@ namespace PortaleRegione.Persistance
 
             filtro?.BuildExpression(ref query);
 
-            return query.OrderByDescending(n => n.ATTI.SEDUTE.Scadenza_presentazione)
+            return await query.OrderByDescending(n => n.ATTI.SEDUTE.Scadenza_presentazione)
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
         }
     }
 }

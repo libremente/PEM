@@ -19,6 +19,7 @@
 using System;
 using System.Data.Entity.Validation;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using System.Web.Http;
 using PortaleRegione.BAL;
 using PortaleRegione.DTO.Domain;
@@ -37,8 +38,6 @@ namespace PortaleRegione.API.Helpers
         {
             _logicPersone = logicPersone;
         }
-
-        public SessionManager SessionManager => GetSession();
 
         /// <summary>
         ///     Handler per catturare i messaggi di errore
@@ -75,7 +74,7 @@ namespace PortaleRegione.API.Helpers
         ///     Metodo per avere l'utente loggato dal jwt
         /// </summary>
         /// <returns></returns>
-        private SessionManager GetSession()
+        public async Task<PersonaDto> GetSession()
         {
             var identity = RequestContext.Principal.Identity as ClaimsIdentity;
             var role = string.Empty;
@@ -93,15 +92,11 @@ namespace PortaleRegione.API.Helpers
                     }
                 }
 
-            var persona = _logicPersone.GetPersona(new Guid(uid_persona));
+            var persona = await _logicPersone.GetPersona(new Guid(uid_persona));
             persona.CurrentRole = (RuoliIntEnum) Convert.ToInt16(role);
-            persona.Gruppo = _logicPersone.GetGruppoAttualePersona(persona, persona.IsGiunta());
-            var session = new SessionManager
-            {
-                Persona = persona
-            };
+            persona.Gruppo = await _logicPersone.GetGruppoAttualePersona(persona, persona.IsGiunta());
 
-            return session;
+            return persona;
         }
     }
 

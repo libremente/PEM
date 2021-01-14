@@ -44,7 +44,7 @@ namespace PortaleRegione.BAL
 
         #region GetSedute
 
-        public BaseResponse<SeduteDto> GetSedute(BaseRequest<SeduteDto> model, Uri url)
+        public async Task<BaseResponse<SeduteDto>> GetSedute(BaseRequest<SeduteDto> model, Uri url)
         {
             try
             {
@@ -52,15 +52,17 @@ namespace PortaleRegione.BAL
                 var queryFilter = new Filter<SEDUTE>();
                 queryFilter.ImportStatements(model.filtro);
 
-                var result = _unitOfWork.Sedute
-                    .GetAll(_unitOfWork.Legislature.Legislatura_Attiva(), model.page, model.size, queryFilter)
-                    .Select(Mapper.Map<SEDUTE, SeduteDto>);
+                var legislatura_attiva = await _unitOfWork.Legislature.Legislatura_Attiva();
+                var listaSedute = await _unitOfWork.Sedute
+                    .GetAll(legislatura_attiva, model.page, model.size, queryFilter);
+                var countSedute = await _unitOfWork.Sedute.Count(legislatura_attiva, queryFilter);
+                
                 return new BaseResponse<SeduteDto>(
                     model.page,
                     model.size,
-                    result,
+                    listaSedute.Select(Mapper.Map<SEDUTE, SeduteDto>),
                     model.filtro,
-                    _unitOfWork.Sedute.Count(_unitOfWork.Legislature.Legislatura_Attiva(), queryFilter),
+                    countSedute,
                     url);
             }
             catch (Exception e)
@@ -74,11 +76,11 @@ namespace PortaleRegione.BAL
 
         #region GetSeduta
 
-        public SEDUTE GetSeduta(Guid id)
+        public async Task<SEDUTE> GetSeduta(Guid id)
         {
             try
             {
-                var result = _unitOfWork.Sedute.Get(id);
+                var result = await _unitOfWork.Sedute.Get(id);
                 return result;
             }
             catch (Exception e)
@@ -96,7 +98,7 @@ namespace PortaleRegione.BAL
         {
             try
             {
-                var sedutaInDb = _unitOfWork.Sedute.Get(sedutaDto.UIDSeduta);
+                var sedutaInDb = await _unitOfWork.Sedute.Get(sedutaDto.UIDSeduta);
                 sedutaInDb.Eliminato = true;
                 sedutaInDb.UIDPersonaModifica = persona.UID_persona;
                 sedutaInDb.DataModifica = DateTime.Now;
@@ -121,10 +123,10 @@ namespace PortaleRegione.BAL
                 seduta.Eliminato = false;
                 seduta.UIDPersonaCreazione = persona.UID_persona;
                 seduta.DataCreazione = DateTime.Now;
-                seduta.id_legislatura = _unitOfWork.Legislature.Legislatura_Attiva();
+                seduta.id_legislatura = await _unitOfWork.Legislature.Legislatura_Attiva();
                 _unitOfWork.Sedute.Add(seduta);
                 await _unitOfWork.CompleteAsync();
-                return GetSeduta(seduta.UIDSeduta);
+                return await GetSeduta(seduta.UIDSeduta);
             }
             catch (Exception e)
             {
@@ -141,7 +143,7 @@ namespace PortaleRegione.BAL
         {
             try
             {
-                var sedutaInDb = _unitOfWork.Sedute.Get(sedutaDto.UIDSeduta);
+                var sedutaInDb = await _unitOfWork.Sedute.Get(sedutaDto.UIDSeduta);
                 sedutaInDb.UIDPersonaModifica = persona.UID_persona;
                 sedutaInDb.DataModifica = DateTime.Now;
                 Mapper.Map(sedutaDto, sedutaInDb);
@@ -158,9 +160,9 @@ namespace PortaleRegione.BAL
 
         #region ### FILTRI ###
 
-        public IEnumerable<LegislaturaDto> GetLegislature()
+        public async Task<IEnumerable<LegislaturaDto>> GetLegislature()
         {
-            return _unitOfWork.Legislature.GetLegislature().Select(Mapper.Map<legislature, LegislaturaDto>);
+            return (await _unitOfWork.Legislature.GetLegislature()).Select(Mapper.Map<legislature, LegislaturaDto>);
         }
 
         #endregion

@@ -17,6 +17,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 using PortaleRegione.Domain;
 
 namespace PortaleRegione.Contracts
@@ -26,7 +27,7 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface INotifiche_DestinatariRepository : IRepository<NOTIFICHE_DESTINATARI>
     {
-        NOTIFICHE_DESTINATARI Get(long notificaId, Guid personaUId);
-        bool ExistDestinatarioNotifica(Guid emendamentoUId, Guid personaUId);
+        Task<NOTIFICHE_DESTINATARI> Get(long notificaId, Guid personaUId);
+        Task<bool> ExistDestinatarioNotifica(Guid emendamentoUId, Guid personaUId);
     }
 }

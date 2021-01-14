@@ -64,7 +64,7 @@ namespace PortaleRegione.BAL
                 var nameFileXLS = $"PEM_{DateTime.Now:ddMMyyyy_hhmmss}.xlsx";
                 var FilePathComplete = Path.Combine(_pathTemp, nameFileXLS);
 
-                var atto = _unitOfWork.Atti.Get(id);
+                var atto = await _unitOfWork.Atti.Get(id);
 
                 using (var fs = new FileStream(FilePathComplete, FileMode.Create, FileAccess.Write))
                 {
@@ -134,7 +134,7 @@ namespace PortaleRegione.BAL
                         rowEm.CreateCell(GetColumn(rowEm.LastCellNum)).SetCellValue(
                             GetNomeEM(em,
                                 em.Rif_UIDEM.HasValue
-                                    ? Mapper.Map<EM, EmendamentiDto>(_logicEm.GetEM(em.Rif_UIDEM.Value))
+                                    ? Mapper.Map<EM, EmendamentiDto>(await _logicEm.GetEM(em.Rif_UIDEM.Value))
                                     : null));
                         rowEm.CreateCell(GetColumn(rowEm.LastCellNum)).SetCellValue(
                             !string.IsNullOrEmpty(em.DataDeposito)
@@ -174,7 +174,7 @@ namespace PortaleRegione.BAL
                         }
 
                         var proponente =
-                            Mapper.Map<View_UTENTI, PersonaDto>(_unitOfWork.Persone.Get(em.UIDPersonaProponente.Value));
+                            Mapper.Map<View_UTENTI, PersonaDto>(await _unitOfWork.Persone.Get(em.UIDPersonaProponente.Value));
                         rowEm.CreateCell(GetColumn(rowEm.LastCellNum))
                             .SetCellValue(persona.CurrentRole == RuoliIntEnum.Amministratore_PEM
                                 ? $"{proponente.id_persona}-{proponente.DisplayName}"
@@ -184,7 +184,7 @@ namespace PortaleRegione.BAL
 
                         if (!string.IsNullOrEmpty(em.DataDeposito))
                         {
-                            var firme = _logicFirme.GetFirme(Mapper.Map<EmendamentiDto, EM>(em),
+                            var firme = await _logicFirme.GetFirme(Mapper.Map<EmendamentiDto, EM>(em),
                                 FirmeTipoEnum.TUTTE);
                             var firmeDto = firme.Select(Mapper.Map<FIRME, FirmeDto>)
                                 .ToList();
@@ -255,7 +255,7 @@ namespace PortaleRegione.BAL
                 var nameFileDOC = $"EstrazioneEM_{DateTime.Now:ddMMyyyy_hhmmss}.docx";
                 var FilePathComplete = Path.Combine(_pathTemp, nameFileDOC);
 
-                var atto = _unitOfWork.Atti.Get(id);
+                var atto = await _unitOfWork.Atti.Get(id);
 
                 using (var fs = new FileStream(FilePathComplete, FileMode.Create, FileAccess.Write))
                 {
@@ -346,7 +346,7 @@ namespace PortaleRegione.BAL
                         var headerCell1_Run_em = headerCell1_em.CreateRun();
                         headerCell1_Run_em.SetText(GetNomeEM(em,
                             em.Rif_UIDEM.HasValue
-                                ? Mapper.Map<EM, EmendamentiDto>(_logicEm.GetEM(em.Rif_UIDEM.Value))
+                                ? Mapper.Map<EM, EmendamentiDto>(await _logicEm.GetEM(em.Rif_UIDEM.Value))
                                 : null));
 
                         var c2_em = row.GetCell(2);
@@ -364,7 +364,7 @@ namespace PortaleRegione.BAL
                             : em.TestoREL_originale);
 
                         var proponente =
-                            _logicPersone.GetPersona(em.UIDPersonaProponente.Value,
+                            await _logicPersone.GetPersona(em.UIDPersonaProponente.Value,
                                 em.id_gruppo >= AppSettingsConfiguration.GIUNTA_REGIONALE_ID);
 
                         var c4_em = row.GetCell(4);
@@ -373,7 +373,7 @@ namespace PortaleRegione.BAL
                         var headerCell4_Run_em = headerCell4_em.CreateRun();
                         headerCell4_Run_em.SetText(proponente.DisplayName);
 
-                        var firme = _logicFirme.GetFirme(Mapper.Map<EmendamentiDto, EM>(em), FirmeTipoEnum.TUTTE);
+                        var firme = await _logicFirme.GetFirme(Mapper.Map<EmendamentiDto, EM>(em), FirmeTipoEnum.TUTTE);
                         var firmeDto = firme.Select(Mapper.Map<FIRME, FirmeDto>).ToList();
 
                         var firmeAnte = firmeDto.Where(f =>

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ExpressionBuilder.Generics;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Domain;
@@ -29,10 +30,10 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface IStampeRepository : IRepository<STAMPE>
     {
-        IEnumerable<STAMPE> GetAll(PersonaDto persona, int? page, int? size, Filter<STAMPE> filtro = null);
-        IEnumerable<STAMPE> GetAll(int? page, int? size);
-        int Count(PersonaDto persona, Filter<STAMPE> filtro = null);
-        int Count();
-        STAMPE Get(Guid stampaUId);
+        Task<IEnumerable<STAMPE>> GetAll(PersonaDto persona, int? page, int? size, Filter<STAMPE> filtro = null);
+        Task<IEnumerable<STAMPE>> GetAll(int? page, int? size);
+        Task<int> Count(PersonaDto persona, Filter<STAMPE> filtro = null);
+        Task<int> Count();
+        Task<STAMPE> Get(Guid stampaUId);
     }
 }

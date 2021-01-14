@@ -29,13 +29,13 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface IGruppiRepository : IRepository<gruppi_politici>
     {
-        GruppiDto GetGruppoPersona(List<string> LGruppi, bool IsGiunta = false);
-        IEnumerable<KeyValueDto> GetAll(int id_legislatura);
-        gruppi_politici Get(int gruppoId);
-        View_UTENTI GetCapoGruppo(int gruppoId);
-        IEnumerable<UTENTI_NoCons> GetSegreteriaPolitica(int id, bool notifica_firma, bool notifica_deposito);
-        IEnumerable<View_UTENTI> GetConsiglieriGruppo(int id_legislatura, int id_gruppo);
-        View_gruppi_politici_con_giunta GetGruppoAttuale(PersonaDto persona, bool isGiunta);
+        Task<GruppiDto> GetGruppoPersona(List<string> LGruppi, bool IsGiunta = false);
+        Task<IEnumerable<KeyValueDto>> GetAll(int id_legislatura);
+        Task<gruppi_politici> Get(int gruppoId);
+        Task<View_UTENTI> GetCapoGruppo(int gruppoId);
+        Task<IEnumerable<UTENTI_NoCons>> GetSegreteriaPolitica(int id, bool notifica_firma, bool notifica_deposito);
+        Task<IEnumerable<View_UTENTI>> GetConsiglieriGruppo(int id_legislatura, int id_gruppo);
+        Task<View_gruppi_politici_con_giunta> GetGruppoAttuale(PersonaDto persona, bool isGiunta);
 
         Task<IEnumerable<JOIN_GRUPPO_AD>> GetGruppiPoliticiAD(int id_legislatura, bool soloRuoliGiunta);
 

@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
 using PortaleRegione.Domain;
@@ -36,19 +37,19 @@ namespace PortaleRegione.Persistance
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
 
-        public int Legislatura_Attiva()
+        public async Task<int> Legislatura_Attiva()
         {
-            var result = PRContext.legislature.SingleOrDefault(l => l.attiva);
+            var result = await PRContext.legislature.SingleOrDefaultAsync(l => l.attiva);
             return result?.id_legislatura ?? 0;
         }
 
-        public IEnumerable<legislature> GetLegislature()
+        public async Task<IEnumerable<legislature>> GetLegislature()
         {
             var query = PRContext
                 .legislature
                 .OrderByDescending(l => l.durata_legislatura_da);
 
-            return query.ToList();
+            return await query.ToListAsync();
         }
     }
 }

@@ -1521,16 +1521,6 @@ namespace PortaleRegione.Gateway
                 {
                     page = page,
                     size = size
-                    //,
-                    //filtro = new List<FilterStatement<SeduteDto>>
-                    //{
-                    //    new FilterStatement<SeduteDto>
-                    //    {
-                    //        PropertyId = nameof(SeduteDto.UIDSeduta),
-                    //        Operation = Operation.EqualTo,
-                    //        Value = new Guid("481AE936-F0F8-EA11-80B7-005056904635")
-                    //    }
-                    //}
                 };
                 var body = JsonConvert.SerializeObject(model);
 

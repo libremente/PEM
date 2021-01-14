@@ -41,18 +41,19 @@ namespace PortaleRegione.Persistance
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
 
-        public ATTI Get(Guid attoUId)
+        public async Task<ATTI> Get(Guid attoUId)
         {
-            return PRContext.ATTI.Find(attoUId);
+            return await PRContext.ATTI.FindAsync(attoUId);
         }
 
-        public ATTI Get(string attoUId)
+        public async Task<ATTI> Get(string attoUId)
         {
             var newGuid = new Guid(attoUId);
-            return Get(newGuid);
+            return await Get(newGuid);
         }
 
-        public IEnumerable<ATTI> GetAll(Guid sedutaUId, int pageIndex, int pageSize, Filter<ATTI> filtro = null)
+        public async Task<IEnumerable<ATTI>> GetAll(Guid sedutaUId, int pageIndex, int pageSize,
+            Filter<ATTI> filtro = null)
         {
             var query = PRContext
                 .ATTI
@@ -60,20 +61,20 @@ namespace PortaleRegione.Persistance
 
             filtro?.BuildExpression(ref query);
 
-            return query
+            return await query
                 .OrderBy(c => c.Priorita)
                 .Include(c => c.TIPI_ATTO)
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
         }
 
-        public void SalvaRelatori(Guid attoUId, IEnumerable<Guid> persone)
+        public async Task SalvaRelatori(Guid attoUId, IEnumerable<Guid> persone)
         {
-            var oldRelatori = PRContext
+            var oldRelatori = await PRContext
                 .ATTI_RELATORI
                 .Where(ar => ar.UIDAtto == attoUId)
-                .ToList();
+                .ToListAsync();
             PRContext
                 .ATTI_RELATORI
                 .RemoveRange(oldRelatori);
@@ -87,60 +88,55 @@ namespace PortaleRegione.Persistance
                 .AddRange(newRelatori);
         }
 
-        public int PrioritaAtto(Guid sedutaUId)
+        public async Task<int> PrioritaAtto(Guid sedutaUId)
         {
-            var list = PRContext
+            var list = await PRContext
                 .ATTI
                 .Where(a => a.UIDSeduta == sedutaUId && a.Eliminato == false)
                 .OrderByDescending(a => a.Priorita)
                 .Take(1)
-                .ToList();
+                .ToListAsync();
 
             return list.Any() ? list[0].Priorita.Value + 1 : 1;
         }
 
         public async Task<int> CountEM(Guid id, bool sub_em, PersonaDto persona, int gruppo)
         {
-            return await Task.Run(() =>
+            var query = PRContext.EM
+                .Where(em =>
+                    em.UIDAtto == id
+                    && !em.Eliminato);
+
+            if (persona != null)
             {
-                var query = PRContext.EM
-                    .Where(em =>
-                        em.UIDAtto == id
-                        && !em.Eliminato);
+                query = query.Where(em => em.IDStato != (int) StatiEnum.Bozza
+                                          || em.IDStato == (int) StatiEnum.Bozza
+                                          && (em.UIDPersonaCreazione == persona.UID_persona
+                                              || em.UIDPersonaProponente == persona.UID_persona));
+                if (persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea)
+                    //Solo segreteria
+                    query = query.Where(e => !string.IsNullOrEmpty(e.DataDeposito));
+                else if (persona.CurrentRole != RuoliIntEnum.Amministratore_PEM)
+                    //Tutti gli altri utenti visualizzano gli emendamenti del proprio gruppo
+                    query = query.Where(e => e.id_gruppo == gruppo);
+            }
+            else
+            {
+                query = query.Where(em => em.IDStato != (int) StatiEnum.Bozza);
+            }
 
-                if (persona != null)
-                {
-                    query = query.Where(em => em.IDStato != (int) StatiEnum.Bozza
-                                              || em.IDStato == (int) StatiEnum.Bozza
-                                              && (em.UIDPersonaCreazione == persona.UID_persona
-                                                  || em.UIDPersonaProponente == persona.UID_persona));
-                    if (persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea)
-                        //Solo segreteria
-                        query = query.Where(e => !string.IsNullOrEmpty(e.DataDeposito));
-                    else if (persona.CurrentRole != RuoliIntEnum.Amministratore_PEM)
-                        //Tutti gli altri utenti visualizzano gli emendamenti del proprio gruppo
-                        query = query.Where(e => e.id_gruppo == gruppo);
-                }
-                else
-                {
-                    query = query.Where(em => em.IDStato != (int) StatiEnum.Bozza);
-                }
+            if (sub_em) query = query.Where(e => e.Rif_UIDEM != null);
 
-                if (sub_em) query = query.Where(e => e.Rif_UIDEM != null);
-
-                return query
-                    .ToList()
-                    .Count;
-            });
+            return (await query.ToListAsync()).Count;
         }
 
-        public int Count(Guid sedutaUId, Filter<ATTI> filtro = null)
+        public async Task<int> Count(Guid sedutaUId, Filter<ATTI> filtro = null)
         {
             var query = PRContext.ATTI.Where(c => c.UIDSeduta == sedutaUId && c.Eliminato == false);
 
             filtro?.BuildExpression(ref query);
 
-            return query.ToList().Count;
+            return (await query.ToListAsync()).Count;
         }
     }
 }

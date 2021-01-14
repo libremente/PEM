@@ -49,7 +49,7 @@ namespace PortaleRegione.Persistance
         /// <param name="attoUId"></param>
         /// <param name="persona"></param>
         /// <returns></returns>
-        public int Count(Guid attoUId, PersonaDto persona, CounterEmendamentiEnum counter_emendamenti, int CLIENT_MODE,
+        public async Task<int> Count(Guid attoUId, PersonaDto persona, CounterEmendamentiEnum counter_emendamenti, int CLIENT_MODE,
             Filter<EM> filtro = null)
         {
             var query = PRContext.EM
@@ -83,28 +83,30 @@ namespace PortaleRegione.Persistance
             switch (counter_emendamenti)
             {
                 case CounterEmendamentiEnum.NONE:
-                    return query.ToList().Count;
+                {
+                    return (await query.ToListAsync()).Count;
+                }
                 case CounterEmendamentiEnum.EM:
                     if (persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea)
-                        return query.Count(e => !string.IsNullOrEmpty(e.N_EM) && string.IsNullOrEmpty(e.N_SUBEM));
+                        return await query.CountAsync(e => !string.IsNullOrEmpty(e.N_EM) && string.IsNullOrEmpty(e.N_SUBEM));
                     else
-                        return query.Count(e => string.IsNullOrEmpty(e.N_SUBEM));
+                        return await query.CountAsync(e => string.IsNullOrEmpty(e.N_SUBEM));
                 case CounterEmendamentiEnum.SUB_EM:
                     if (persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea)
-                        return query.Count(e => string.IsNullOrEmpty(e.N_EM));
+                        return await query.CountAsync(e => string.IsNullOrEmpty(e.N_EM));
                     else
-                        return query.Count(e => string.IsNullOrEmpty(e.N_EM) && !string.IsNullOrEmpty(e.N_SUBEM));
+                        return await query.CountAsync(e => string.IsNullOrEmpty(e.N_EM) && !string.IsNullOrEmpty(e.N_SUBEM));
                 default:
                     return 0;
             }
         }
 
-        public int Count(string query)
+        public async Task<int> Count(string query)
         {
-            return PRContext
+            return await PRContext
                 .EM
                 .SqlQuery(query)
-                .Count();
+                .CountAsync();
         }
 
         #region GET
@@ -118,7 +120,7 @@ namespace PortaleRegione.Persistance
         /// <param name="page"></param>
         /// <param name="size"></param>
         /// <returns></returns>
-        public IEnumerable<Guid> GetAll(Guid attoUId, PersonaDto persona, OrdinamentoEnum ordine, int? page,
+        public async Task<IEnumerable<Guid>> GetAll(Guid attoUId, PersonaDto persona, OrdinamentoEnum ordine, int? page,
             int? size, int CLIENT_MODE, Filter<EM> filtro = null)
         {
             var query = PRContext.EM
@@ -163,11 +165,11 @@ namespace PortaleRegione.Persistance
                     break;
             }
 
-            return query
+            return await query
                 .Skip((page.Value - 1) * size.Value)
                 .Take(size.Value)
                 .Select(em => em.UIDEM)
-                .ToList();
+                .ToListAsync();
         }
 
         /// <summary>
@@ -177,12 +179,13 @@ namespace PortaleRegione.Persistance
         /// <returns></returns>
         public IEnumerable<EM> GetAll(EmendamentiByQueryModel model)
         {
-            return PRContext
+            var query = PRContext
                 .EM
                 .SqlQuery(model.Query)
                 .Skip((model.page - 1) * model.size)
-                .Take(model.size)
-                .ToList();
+                .Take(model.size);
+
+            return query.ToList();
         }
 
         /// <summary>
@@ -243,9 +246,9 @@ namespace PortaleRegione.Persistance
         /// </summary>
         /// <param name="emendamentoUId"></param>
         /// <returns></returns>
-        public EM Get(Guid emendamentoUId)
+        public async Task<EM> Get(Guid emendamentoUId)
         {
-            return PRContext.EM.Find(emendamentoUId);
+            return await PRContext.EM.FindAsync(emendamentoUId);
         }
 
         /// <summary>
@@ -253,10 +256,10 @@ namespace PortaleRegione.Persistance
         /// </summary>
         /// <param name="emendamentoUId"></param>
         /// <returns></returns>
-        public EM Get(string emendamentoUId)
+        public async Task<EM> Get(string emendamentoUId)
         {
             var guidId = new Guid(emendamentoUId);
-            return Get(guidId);
+            return await Get(guidId);
         }
 
         /// <summary>
@@ -265,14 +268,14 @@ namespace PortaleRegione.Persistance
         /// <param name="attoUId"></param>
         /// <param name="sub"></param>
         /// <returns></returns>
-        public int GetEtichetta(Guid attoUId, bool sub)
+        public async Task<int> GetEtichetta(Guid attoUId, bool sub)
         {
             var query = PRContext.EM
                 .Where(em => em.UIDAtto == attoUId
                              && em.Eliminato == false);
             return sub
-                ? query.Count(e => string.IsNullOrEmpty(e.N_EM) && !string.IsNullOrEmpty(e.N_SUBEM))
-                : query.Count(e => !string.IsNullOrEmpty(e.N_EM) && string.IsNullOrEmpty(e.N_SUBEM));
+                ? await query.CountAsync(e => string.IsNullOrEmpty(e.N_EM) && !string.IsNullOrEmpty(e.N_SUBEM))
+                : await query.CountAsync(e => !string.IsNullOrEmpty(e.N_EM) && string.IsNullOrEmpty(e.N_SUBEM));
         }
 
         /// <summary>
@@ -280,7 +283,7 @@ namespace PortaleRegione.Persistance
         /// </summary>
         /// <param name="emendamentoUId"></param>
         /// <returns></returns>
-        public IEnumerable<NOTIFICHE_DESTINATARI> GetInvitati(Guid emendamentoUId)
+        public async Task<IEnumerable<NOTIFICHE_DESTINATARI>> GetInvitati(Guid emendamentoUId)
         {
             try
             {
@@ -292,7 +295,7 @@ namespace PortaleRegione.Persistance
                         nd => nd.UIDNotifica,
                         (n, nd) => nd);
 
-                return query.ToList();
+                return await query.ToListAsync();
             }
             catch (Exception e)
             {
@@ -308,7 +311,7 @@ namespace PortaleRegione.Persistance
         /// <param name="gruppo"></param>
         /// <param name="sub"></param>
         /// <returns></returns>
-        public int GetProgressivo(Guid attoUId, int gruppo, bool sub)
+        public async Task<int> GetProgressivo(Guid attoUId, int gruppo, bool sub)
         {
             var query = PRContext.EM
                 .Where(em => em.UIDAtto == attoUId
@@ -320,7 +323,7 @@ namespace PortaleRegione.Persistance
             else
                 query = query.OrderByDescending(em => em.Progressivo)
                     .Take(1);
-            var list = query.ToList();
+            var list = await query.ToListAsync();
             if (list.Count == 0)
                 return 1;
             if (sub)
@@ -359,18 +362,18 @@ namespace PortaleRegione.Persistance
         ///     Ritorna tutti i valori disponibili in tabella
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<MISSIONI> GetMissioniEmendamento()
+        public async Task<IEnumerable<MISSIONI>> GetMissioniEmendamento()
         {
-            return PRContext.MISSIONI.ToList();
+            return await PRContext.MISSIONI.ToListAsync();
         }
 
         /// <summary>
         ///     Ritorna tutti i valori disponibili in tabella
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<TITOLI_MISSIONI> GetTitoliMissioneEmendamento()
+        public async Task<IEnumerable<TITOLI_MISSIONI>> GetTitoliMissioneEmendamento()
         {
-            return PRContext.TITOLI_MISSIONI.ToList();
+            return await PRContext.TITOLI_MISSIONI.ToListAsync();
         }
 
         /// <summary>
@@ -438,7 +441,7 @@ namespace PortaleRegione.Persistance
         /// <param name="em"></param>
         /// <param name="persona"></param>
         /// <returns></returns>
-        public bool CheckIfDepositabile(EmendamentiDto em, PersonaDto persona)
+        public async Task<bool> CheckIfDepositabile(EmendamentiDto em, PersonaDto persona)
         {
             if (!string.IsNullOrEmpty(em.DataDeposito))
                 return false;
@@ -448,9 +451,9 @@ namespace PortaleRegione.Persistance
                 if (em.Firma_da_ufficio)
                     return true;
 
-            var firmaProponente = PRContext
+            var firmaProponente = await PRContext
                 .FIRME
-                .Find(em.UIDEM, em.UIDPersonaProponente);
+                .FindAsync(em.UIDEM, em.UIDPersonaProponente);
 
             // Se proponente non ha firmato non è possibile depositare
             if (firmaProponente == null)
@@ -475,14 +478,13 @@ namespace PortaleRegione.Persistance
             return false;
         }
 
-
         /// <summary>
         ///     Controlla che l'emendamento sia modificabile dall'utente
         /// </summary>
         /// <param name="em"></param>
         /// <param name="persona"></param>
         /// <returns></returns>
-        public bool CheckIfModificabile(EmendamentiDto em, PersonaDto persona)
+        public async Task<bool> CheckIfModificabile(EmendamentiDto em, PersonaDto persona)
         {
             if (string.IsNullOrEmpty(em.EM_Certificato))
                 return em.UIDPersonaProponente == persona.UID_persona
@@ -490,12 +492,11 @@ namespace PortaleRegione.Persistance
                        || persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Politica
                        || persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Giunta;
 
-            var counter = PRContext.FIRME.Count(f => f.UIDEM == em.UIDEM && string.IsNullOrEmpty(f.Data_ritirofirma));
+            var counter = await PRContext.FIRME.CountAsync(f => f.UIDEM == em.UIDEM && string.IsNullOrEmpty(f.Data_ritirofirma));
             return (em.UIDPersonaProponente == persona.UID_persona || em.UIDPersonaCreazione == persona.UID_persona)
                    && (em.IDStato == (int) StatiEnum.Bozza || em.IDStato == (int) StatiEnum.Bozza_Riservata)
                    && counter == 1;
         }
-
 
         /// <summary>
         ///     Controlla che il progressivo sia unico all'interno dell'atto
@@ -504,7 +505,7 @@ namespace PortaleRegione.Persistance
         /// <param name="encrypt_progressivo"></param>
         /// <param name="counter_emendamenti"></param>
         /// <returns></returns>
-        public bool CheckProgressivo(Guid attoUId, string encrypt_progressivo,
+        public async Task<bool> CheckProgressivo(Guid attoUId, string encrypt_progressivo,
             CounterEmendamentiEnum counter_emendamenti)
         {
             var query = PRContext
@@ -516,9 +517,9 @@ namespace PortaleRegione.Persistance
                 case CounterEmendamentiEnum.NONE:
                     return false;
                 case CounterEmendamentiEnum.EM:
-                    return !query.Any(e => e.UIDAtto == attoUId && e.N_EM == encrypt_progressivo);
+                    return !(await query.AnyAsync(e => e.UIDAtto == attoUId && e.N_EM == encrypt_progressivo));
                 case CounterEmendamentiEnum.SUB_EM:
-                    return !query.Any(e => e.UIDAtto == attoUId && e.N_SUBEM == encrypt_progressivo);
+                    return !(await query.AnyAsync(e => e.UIDAtto == attoUId && e.N_SUBEM == encrypt_progressivo));
                 default:
                     throw new ArgumentOutOfRangeException(nameof(counter_emendamenti), counter_emendamenti, null);
             }
@@ -528,27 +529,27 @@ namespace PortaleRegione.Persistance
 
         #region SPOSTAMENTI EM IN FASE DI VOTAZIONE
 
-        public void ORDINA_EM_TRATTAZIONE(Guid attoUId)
+        public async Task ORDINA_EM_TRATTAZIONE(Guid attoUId)
         {
-            PRContext.Database.ExecuteSqlCommand(
+            await PRContext.Database.ExecuteSqlCommandAsync(
                 $"exec ORDINA_EM_TRATTAZIONE @UIDAtto='{attoUId}'");
         }
 
-        public void UP_EM_TRATTAZIONE(Guid emendamentoUId)
+        public async Task UP_EM_TRATTAZIONE(Guid emendamentoUId)
         {
-            PRContext.Database.ExecuteSqlCommand(
+            await PRContext.Database.ExecuteSqlCommandAsync(
                 $"exec UP_EM_TRATTAZIONE @UIDEM='{emendamentoUId}'");
         }
 
-        public void DOWN_EM_TRATTAZIONE(Guid emendamentoUId)
+        public async Task DOWN_EM_TRATTAZIONE(Guid emendamentoUId)
         {
-            PRContext.Database.ExecuteSqlCommand(
+            await PRContext.Database.ExecuteSqlCommandAsync(
                 $"exec DOWN_EM_TRATTAZIONE @UIDEM='{emendamentoUId}'");
         }
 
-        public void SPOSTA_EM_TRATTAZIONE(Guid emendamentoUId, int pos)
+        public async Task SPOSTA_EM_TRATTAZIONE(Guid emendamentoUId, int pos)
         {
-            PRContext.Database.ExecuteSqlCommand(
+            await PRContext.Database.ExecuteSqlCommandAsync(
                 $"exec SPOSTA_EM_TRATTAZIONE @UIDEM='{emendamentoUId}',@Pos={pos}");
         }
 

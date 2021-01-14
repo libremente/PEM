@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using ExpressionBuilder.Generics;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
@@ -39,7 +41,8 @@ namespace PortaleRegione.Persistance
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
 
-        public IEnumerable<STAMPE> GetAll(PersonaDto persona, int? page, int? size, Filter<STAMPE> filtro = null)
+        public async Task<IEnumerable<STAMPE>> GetAll(PersonaDto persona, int? page, int? size,
+            Filter<STAMPE> filtro = null)
         {
             IQueryable<STAMPE> query;
             if (persona.CurrentRole != RuoliIntEnum.Amministratore_PEM &&
@@ -50,25 +53,25 @@ namespace PortaleRegione.Persistance
 
             filtro?.BuildExpression(ref query);
 
-            return query
+            return await query
                 .OrderByDescending(s => s.DataRichiesta)
                 .Skip((page.Value - 1) * size.Value)
                 .Take(size.Value)
-                .ToList();
+                .ToListAsync();
         }
 
-        public IEnumerable<STAMPE> GetAll(int? page, int? size)
+        public async Task<IEnumerable<STAMPE>> GetAll(int? page, int? size)
         {
-            return PRContext
+            return await PRContext
                 .STAMPE
                 .Where(s => !s.Lock)
                 .OrderByDescending(s => s.DataRichiesta)
                 .Skip((page.Value - 1) * size.Value)
                 .Take(size.Value)
-                .ToList();
+                .ToListAsync();
         }
 
-        public int Count(PersonaDto persona, Filter<STAMPE> filtro = null)
+        public async Task<int> Count(PersonaDto persona, Filter<STAMPE> filtro = null)
         {
             IQueryable<STAMPE> query;
             if (persona.CurrentRole == RuoliIntEnum.Amministratore_PEM ||
@@ -79,19 +82,19 @@ namespace PortaleRegione.Persistance
 
             filtro?.BuildExpression(ref query);
 
-            return query.Count();
+            return await query.CountAsync();
         }
 
-        public int Count()
+        public async Task<int> Count()
         {
-            return PRContext
+            return await PRContext
                 .STAMPE
-                .Count(s => !s.Lock);
+                .CountAsync(s => !s.Lock);
         }
 
-        public STAMPE Get(Guid stampaUId)
+        public async Task<STAMPE> Get(Guid stampaUId)
         {
-            return PRContext.STAMPE.Find(stampaUId);
+            return await PRContext.STAMPE.FindAsync(stampaUId);
         }
     }
 }

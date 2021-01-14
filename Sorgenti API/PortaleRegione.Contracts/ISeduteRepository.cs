@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ExpressionBuilder.Generics;
 using PortaleRegione.Domain;
 
@@ -28,9 +29,9 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface ISeduteRepository : IRepository<SEDUTE>
     {
-        int Count(int legislaturaId, Filter<SEDUTE> filtro = null);
-        SEDUTE Get(Guid sedutaUId);
+        Task<int> Count(int legislaturaId, Filter<SEDUTE> filtro = null);
+        Task<SEDUTE> Get(Guid sedutaUId);
 
-        IEnumerable<SEDUTE> GetAll(int legislaturaId, int pageIndex, int pageSize, Filter<SEDUTE> filtro = null);
+        Task<IEnumerable<SEDUTE>> GetAll(int legislaturaId, int pageIndex, int pageSize, Filter<SEDUTE> filtro = null);
     }
 }

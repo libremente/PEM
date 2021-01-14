@@ -24,7 +24,6 @@ using AutoMapper;
 using PortaleRegione.Contracts;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Domain;
-using PortaleRegione.DTO.Enum;
 using PortaleRegione.DTO.Model;
 
 namespace PortaleRegione.BAL
@@ -42,9 +41,9 @@ namespace PortaleRegione.BAL
 
         #region GetPin
 
-        public PinDto GetPin(PersonaDto persona)
+        public async Task<PinDto> GetPin(PersonaDto persona)
         {
-            var pinInDb = _unitOfWork.Persone.GetPin(persona.UID_persona);
+            var pinInDb = await _unitOfWork.Persone.GetPin(persona.UID_persona);
             if (pinInDb == null)
                 return null;
             var pin = Mapper.Map<View_PINS, PinDto>(pinInDb);
@@ -58,19 +57,19 @@ namespace PortaleRegione.BAL
 
         public async Task CambioPin(CambioPinModel model)
         {
-            _unitOfWork.Persone.SavePin(model.PersonaUId,
+            await _unitOfWork.Persone.SavePin(model.PersonaUId,
                 EncryptString(model.nuovo_pin, AppSettingsConfiguration.masterKey),
                 false);
             await _unitOfWork.CompleteAsync();
         }
 
         #endregion
-        
+
         #region ResetPin
 
         public async Task ResetPin(ResetPinModel model)
         {
-            _unitOfWork.Persone.SavePin(model.PersonaUId,
+            await _unitOfWork.Persone.SavePin(model.PersonaUId,
                 EncryptString(model.nuovo_pin, AppSettingsConfiguration.masterKey),
                 true);
             await _unitOfWork.CompleteAsync();
@@ -80,24 +79,24 @@ namespace PortaleRegione.BAL
 
         #region GetGruppoAttualePersona
 
-        public GruppiDto GetGruppoAttualePersona(PersonaDto persona, bool isGiunta)
+        public async Task<GruppiDto> GetGruppoAttualePersona(PersonaDto persona, bool isGiunta)
         {
             return Mapper.Map<View_gruppi_politici_con_giunta, GruppiDto>(
-                _unitOfWork.Gruppi.GetGruppoAttuale(persona, isGiunta));
+                await _unitOfWork.Gruppi.GetGruppoAttuale(persona, isGiunta));
         }
 
         #endregion
 
         #region GetConsiglieri
 
-        public IEnumerable<PersonaDto> GetConsiglieri()
+        public async Task<IEnumerable<PersonaDto>> GetConsiglieri()
         {
-            var result = _unitOfWork
-                .Persone
-                .GetConsiglieri(_unitOfWork.Legislature.Legislatura_Attiva())
+            var result = (await _unitOfWork
+                    .Persone
+                    .GetConsiglieri(await _unitOfWork.Legislature.Legislatura_Attiva()))
                 .Select(Mapper.Map<View_UTENTI, PersonaDto>).ToList();
 
-            result.ForEach(persona => { persona.Gruppo ??= GetGruppoAttualePersona(persona, false); });
+            result.ForEach(async persona => { persona.Gruppo ??= await GetGruppoAttualePersona(persona, false); });
             return result;
         }
 
@@ -105,11 +104,11 @@ namespace PortaleRegione.BAL
 
         #region GetAssessoriRiferimento
 
-        public IEnumerable<PersonaDto> GetAssessoriRiferimento()
+        public async Task<IEnumerable<PersonaDto>> GetAssessoriRiferimento()
         {
-            var result = _unitOfWork
+            var result = (await _unitOfWork
                 .Persone
-                .GetAssessoriRiferimento(_unitOfWork.Legislature.Legislatura_Attiva())
+                .GetAssessoriRiferimento(await _unitOfWork.Legislature.Legislatura_Attiva()))
                 .Select(Mapper.Map<View_UTENTI, PersonaDto>);
             return result;
         }
@@ -118,46 +117,23 @@ namespace PortaleRegione.BAL
 
         #region GetConsiglieriGruppo
 
-        public IEnumerable<PersonaDto> GetConsiglieriGruppo(int gruppoId)
+        public async Task<IEnumerable<PersonaDto>> GetConsiglieriGruppo(int gruppoId)
         {
-            var result = _unitOfWork
+            var result = (await _unitOfWork
                 .Gruppi
-                .GetConsiglieriGruppo(_unitOfWork.Legislature.Legislatura_Attiva(),
-                    gruppoId)
+                .GetConsiglieriGruppo(await _unitOfWork.Legislature.Legislatura_Attiva(),
+                    gruppoId))
                 .Select(Mapper.Map<View_UTENTI, PersonaDto>);
             return result;
         }
 
         #endregion
 
-        #region GetPersona
-
-        public PersonaDto GetPersona(Guid proponenteUId, bool isGiunta)
-        {
-            var persona = Mapper.Map<View_UTENTI, PersonaDto>(_unitOfWork.Persone.Get(proponenteUId));
-            persona.Gruppo = GetGruppoAttualePersona(persona, isGiunta);
-            return persona;
-        }
-
-        public PersonaDto GetPersona(int personaId)
-        {
-            var persona = Mapper.Map<View_UTENTI, PersonaDto>(_unitOfWork.Persone.Get(personaId));
-            return persona;
-        }
-        
-        public PersonaDto GetPersona(Guid personaUId)
-        {
-            var persona = Mapper.Map<View_UTENTI, PersonaDto>(_unitOfWork.Persone.Get(personaUId));
-            return persona;
-        }
-
-        #endregion
-
         #region GetCapoGruppo
 
-        public PersonaDto GetCapoGruppo(int gruppoId)
+        public async Task<PersonaDto> GetCapoGruppo(int gruppoId)
         {
-            var persona = Mapper.Map<View_UTENTI, PersonaDto>(_unitOfWork.Gruppi.GetCapoGruppo(gruppoId));
+            var persona = Mapper.Map<View_UTENTI, PersonaDto>(await _unitOfWork.Gruppi.GetCapoGruppo(gruppoId));
             return persona;
         }
 
@@ -165,20 +141,20 @@ namespace PortaleRegione.BAL
 
         #region GetPersone_DA_CANCELLARE
 
-        protected internal IEnumerable<PersonaDto> GetPersone_DA_CANCELLARE()
+        protected internal async Task<IEnumerable<PersonaDto>> GetPersone_DA_CANCELLARE()
         {
-            return _unitOfWork.Persone.GetAll_DA_CANCELLARE().Select(Mapper.Map<View_UTENTI, PersonaDto>);
+            return (await _unitOfWork.Persone.GetAll_DA_CANCELLARE()).Select(Mapper.Map<View_UTENTI, PersonaDto>);
         }
 
         #endregion
 
         #region GetGruppi
 
-        public IEnumerable<KeyValueDto> GetGruppi()
+        public async Task<IEnumerable<KeyValueDto>> GetGruppi()
         {
-            var gruppiDtos = _unitOfWork
+            var gruppiDtos = await _unitOfWork
                 .Gruppi
-                .GetAll(_unitOfWork
+                .GetAll(await _unitOfWork
                     .Legislature
                     .Legislatura_Attiva());
 
@@ -189,10 +165,10 @@ namespace PortaleRegione.BAL
 
         #region GetRelatori
 
-        public IEnumerable<PersonaDto> GetRelatori(Guid? id)
+        public async Task<IEnumerable<PersonaDto>> GetRelatori(Guid? id)
         {
-            var personaDtos = _unitOfWork.Persone
-                .GetRelatori(id == null || id == Guid.Empty ? Guid.Empty : id)
+            var personaDtos = (await _unitOfWork.Persone
+                .GetRelatori(id == null || id == Guid.Empty ? Guid.Empty : id))
                 .Select(Mapper.Map<View_UTENTI, PersonaDto>);
 
             return personaDtos;
@@ -202,9 +178,32 @@ namespace PortaleRegione.BAL
 
         #region GetCaricaPersona
 
-        public string GetCaricaPersona(Guid personaUId)
+        public async Task<string> GetCaricaPersona(Guid personaUId)
         {
-            return _unitOfWork.Persone.GetCarica(personaUId);
+            return await _unitOfWork.Persone.GetCarica(personaUId);
+        }
+
+        #endregion
+
+        #region GetPersona
+
+        public async Task<PersonaDto> GetPersona(Guid proponenteUId, bool isGiunta)
+        {
+            var persona = Mapper.Map<View_UTENTI, PersonaDto>(await _unitOfWork.Persone.Get(proponenteUId));
+            persona.Gruppo = await GetGruppoAttualePersona(persona, isGiunta);
+            return persona;
+        }
+
+        public async Task<PersonaDto> GetPersona(int personaId)
+        {
+            var persona = Mapper.Map<View_UTENTI, PersonaDto>(await _unitOfWork.Persone.Get(personaId));
+            return persona;
+        }
+
+        public async Task<PersonaDto> GetPersona(Guid personaUId)
+        {
+            var persona = Mapper.Map<View_UTENTI, PersonaDto>(await _unitOfWork.Persone.Get(personaUId));
+            return persona;
         }
 
         #endregion

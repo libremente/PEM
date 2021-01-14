@@ -59,7 +59,7 @@ namespace PortaleRegione.API
         /// <param name="request"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             HttpStatusCode statusCode;
@@ -70,7 +70,7 @@ namespace PortaleRegione.API
             {
                 statusCode = HttpStatusCode.Unauthorized;
                 //allow requests with no token - whether a action method needs an authentication can be set with the claimsauthorization attribute
-                return base.SendAsync(request, cancellationToken);
+                return await base.SendAsync(request, cancellationToken);
             }
 
             try
@@ -96,7 +96,7 @@ namespace PortaleRegione.API
                 Thread.CurrentPrincipal = handler.ValidateToken(token, validationParameters, out var _);
                 HttpContext.Current.User = handler.ValidateToken(token, validationParameters, out var _);
 
-                return base.SendAsync(request, cancellationToken);
+                return await base.SendAsync(request, cancellationToken);
             }
             catch (SecurityTokenValidationException ex)
             {
@@ -107,7 +107,7 @@ namespace PortaleRegione.API
                 statusCode = HttpStatusCode.InternalServerError;
             }
 
-            return Task<HttpResponseMessage>.Factory.StartNew(() => new HttpResponseMessage(statusCode),
+            return await Task<HttpResponseMessage>.Factory.StartNew(() => new HttpResponseMessage(statusCode),
                 cancellationToken);
         }
 

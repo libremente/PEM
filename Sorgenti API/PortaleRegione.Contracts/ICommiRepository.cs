@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using PortaleRegione.Domain;
 
 namespace PortaleRegione.Contracts
@@ -27,9 +28,9 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface ICommiRepository : IRepository<COMMI>
     {
-        bool CheckIfCommiExists(Guid articoloUId, string comma);
-        IEnumerable<COMMI> GetCommi(Guid articoloUId);
-        COMMI GetComma(Guid commaUId);
-        int OrdineComma(Guid articoloUId);
+        Task<bool> CheckIfCommiExists(Guid articoloUId, string comma);
+        Task<IEnumerable<COMMI>> GetCommi(Guid articoloUId);
+        Task<COMMI> GetComma(Guid commaUId);
+        Task<int> OrdineComma(Guid articoloUId);
     }
 }

@@ -45,19 +45,18 @@ namespace PortaleRegione.BAL
 
         #region GetPersoneIn_DB
 
-        public IEnumerable<PersonaDto> GetPersoneIn_DB(BaseRequest<PersonaDto> model)
+        public async Task<IEnumerable<PersonaDto>> GetPersoneIn_DB(BaseRequest<PersonaDto> model)
         {
             try
             {
                 var queryFilter = new Filter<View_UTENTI>();
                 queryFilter.ImportStatements(model.filtro);
 
-                var listaPersone = _unitOfWork
-                    .Persone
-                    .GetAll(model.page,
-                        model.size,
-                        queryFilter)
-                    .ToList()
+                var listaPersone = (await _unitOfWork
+                        .Persone
+                        .GetAll(model.page,
+                            model.size,
+                            queryFilter))
                     .Select(Mapper.Map<View_UTENTI, PersonaDto>);
 
                 return listaPersone;
@@ -110,58 +109,16 @@ namespace PortaleRegione.BAL
 
         #endregion
 
-        #region GetPersona
-
-        public PersonaDto GetPersona(int id)
-        {
-            return _logicPersona.GetPersona(id);
-        }
-        
-        public PersonaDto GetPersona(Guid id)
-        {
-            return _logicPersona.GetPersona(id);
-        }
-        
-        public PersonaDto GetPersona(PersonaDto persona, List<string> gruppi_utente)
-        {
-            var ruoli_utente = _unitOfWork.Ruoli.RuoliUtente(gruppi_utente).ToList();
-            if (ruoli_utente.Any())
-            {
-                persona.Ruoli = ruoli_utente.Select(Mapper.Map<RUOLI, RuoliDto>);
-                persona.CurrentRole = (RuoliIntEnum) ruoli_utente[0].IDruolo;
-            }
-            else
-            {
-                persona.CurrentRole = RuoliIntEnum.Utente;
-            }
-
-            if (gruppi_utente.Any())
-            {
-                persona.Gruppo = _unitOfWork.Gruppi.GetGruppoPersona(gruppi_utente, persona.IsGiunta());
-                persona.Gruppi = gruppi_utente.Aggregate((i, j) => i + "; " + j);
-            }
-
-            var gruppiUtente_AD = GetADGroups(persona.userAD.Replace(@"CONSIGLIO\", ""));
-            if (gruppiUtente_AD.Any())
-                persona.GruppiAD = gruppiUtente_AD.Aggregate((i, j) => i + "; " + j);
-
-            CheckPin(ref persona);
-
-            return persona;
-        }
-
-        #endregion
-
         #region Count
 
-        public int Count(BaseRequest<PersonaDto> model)
+        public async Task<int> Count(BaseRequest<PersonaDto> model)
         {
             try
             {
                 var queryFilter = new Filter<View_UTENTI>();
                 queryFilter.ImportStatements(model.filtro);
 
-                return _unitOfWork
+                return await _unitOfWork
                     .Persone
                     .CountAll(queryFilter);
             }
@@ -177,18 +134,16 @@ namespace PortaleRegione.BAL
         #region GetPin
 
         /// <summary>
-        /// Controlla il pin della persona
+        ///     Controlla il pin della persona
         /// </summary>
         /// <param name="persona"></param>
-        public void CheckPin(ref PersonaDto persona)
-        {       
-            var pinInDb = _logicPersona.GetPin(persona);
+        public async Task<StatoPinEnum> CheckPin(PersonaDto persona)
+        {
+            var pinInDb = await _logicPersona.GetPin(persona);
             if (pinInDb == null)
-                persona.Stato_Pin = StatoPinEnum.NESSUNO;
-            else if (pinInDb.RichiediModificaPIN)
-                persona.Stato_Pin = StatoPinEnum.RESET;
-            else
-                persona.Stato_Pin = StatoPinEnum.VALIDO;
+                return StatoPinEnum.NESSUNO;
+
+            return pinInDb.RichiediModificaPIN ? StatoPinEnum.RESET : StatoPinEnum.VALIDO;
         }
 
         #endregion
@@ -202,7 +157,7 @@ namespace PortaleRegione.BAL
         }
 
         #endregion
-        
+
         #region GetGruppiPoliticiAD
 
         public async Task<IEnumerable<GruppoAD_Dto>> GetGruppiPoliticiAD(bool SoloRuoliGiunta)
@@ -210,12 +165,53 @@ namespace PortaleRegione.BAL
             var listaGruppiAD = await _unitOfWork
                 .Gruppi
                 .GetGruppiPoliticiAD(
-                    _unitOfWork.Legislature.Legislatura_Attiva(),
+                    await _unitOfWork.Legislature.Legislatura_Attiva(),
                     SoloRuoliGiunta);
             return listaGruppiAD.Select(Mapper.Map<JOIN_GRUPPO_AD, GruppoAD_Dto>);
         }
 
         #endregion
 
+        #region GetPersona
+
+        public async Task<PersonaDto> GetPersona(int id)
+        {
+            return await _logicPersona.GetPersona(id);
+        }
+
+        public async Task<PersonaDto> GetPersona(Guid id)
+        {
+            return await _logicPersona.GetPersona(id);
+        }
+
+        public async Task<PersonaDto> GetPersona(PersonaDto persona, List<string> gruppi_utente)
+        {
+            var ruoli_utente = (await _unitOfWork.Ruoli.RuoliUtente(gruppi_utente)).ToList();
+            if (ruoli_utente.Any())
+            {
+                persona.Ruoli = ruoli_utente.Select(Mapper.Map<RUOLI, RuoliDto>);
+                persona.CurrentRole = (RuoliIntEnum) ruoli_utente[0].IDruolo;
+            }
+            else
+            {
+                persona.CurrentRole = RuoliIntEnum.Utente;
+            }
+
+            if (gruppi_utente.Any())
+            {
+                persona.Gruppo = await _unitOfWork.Gruppi.GetGruppoPersona(gruppi_utente, persona.IsGiunta());
+                persona.Gruppi = gruppi_utente.Aggregate((i, j) => i + "; " + j);
+            }
+
+            var gruppiUtente_AD = GetADGroups(persona.userAD.Replace(@"CONSIGLIO\", ""));
+            if (gruppiUtente_AD.Any())
+                persona.GruppiAD = gruppiUtente_AD.Aggregate((i, j) => i + "; " + j);
+
+            persona.Stato_Pin = await CheckPin(persona);
+
+            return persona;
+        }
+
+        #endregion
     }
 }

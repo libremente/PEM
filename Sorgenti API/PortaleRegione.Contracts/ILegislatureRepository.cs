@@ -17,6 +17,7 @@
  */
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using PortaleRegione.Domain;
 
 namespace PortaleRegione.Contracts
@@ -26,7 +27,7 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface ILegislatureRepository : IRepository<legislature>
     {
-        int Legislatura_Attiva();
-        IEnumerable<legislature> GetLegislature();
+        Task<int> Legislatura_Attiva();
+        Task<IEnumerable<legislature>> GetLegislature();
     }
 }

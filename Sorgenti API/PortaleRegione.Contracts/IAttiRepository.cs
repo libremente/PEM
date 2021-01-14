@@ -30,13 +30,13 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface IAttiRepository : IRepository<ATTI>
     {
-        int Count(Guid sedutaUId, Filter<ATTI> filtro = null);
+        Task<int> Count(Guid sedutaUId, Filter<ATTI> filtro = null);
         Task<int> CountEM(Guid id, bool sub_em, PersonaDto persona, int gruppo);
-        ATTI Get(Guid attoUId);
-        ATTI Get(string attoUId);
+        Task<ATTI> Get(Guid attoUId);
+        Task<ATTI> Get(string attoUId);
 
-        IEnumerable<ATTI> GetAll(Guid sedutaUId, int pageIndex, int pageSize, Filter<ATTI> filtro = null);
-        void SalvaRelatori(Guid attoUId, IEnumerable<Guid> persone);
-        int PrioritaAtto(Guid sedutaUId);
+        Task<IEnumerable<ATTI>> GetAll(Guid sedutaUId, int pageIndex, int pageSize, Filter<ATTI> filtro = null);
+        Task SalvaRelatori(Guid attoUId, IEnumerable<Guid> persone);
+        Task<int> PrioritaAtto(Guid sedutaUId);
     }
 }

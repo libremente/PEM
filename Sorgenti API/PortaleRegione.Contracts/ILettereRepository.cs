@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using PortaleRegione.Domain;
 
 namespace PortaleRegione.Contracts
@@ -27,9 +28,9 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface ILettereRepository : IRepository<LETTERE>
     {
-        bool CheckIfLetteraExists(Guid commaUId, string lettera);
-        LETTERE GetLettera(Guid lettaraUId);
-        IEnumerable<LETTERE> GetLettere(Guid commaUId);
-        int OrdineLettera(Guid commaUId);
+        Task<bool> CheckIfLetteraExists(Guid commaUId, string lettera);
+        Task<LETTERE> GetLettera(Guid lettaraUId);
+        Task<IEnumerable<LETTERE>> GetLettere(Guid commaUId);
+        Task<int> OrdineLettera(Guid commaUId);
     }
 }

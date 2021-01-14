@@ -41,25 +41,25 @@ namespace PortaleRegione.Persistance
         {
             var query = PRContext
                 .RUOLI
-                .Where(r=>true);
+                .Where(r => true);
             if (soloRuoliGiunta)
                 query = query.Where(r => r.Ruolo_di_Giunta);
 
             return await query.ToListAsync();
         }
 
-        public IEnumerable<RUOLI> RuoliUtente(List<string> lstRuoli)
+        public async Task<IEnumerable<RUOLI>> RuoliUtente(List<string> lstRuoli)
         {
             var query = PRContext.RUOLI
                 .Where(c => lstRuoli.Contains(c.ADGroup))
                 .OrderBy(c => c.Priorita);
 
-            return query.ToList();
+            return await query.ToListAsync();
         }
 
-        public RUOLI Get(int ruoliId)
+        public async Task<RUOLI> Get(int ruoliId)
         {
-            return PRContext.RUOLI.Find(ruoliId);
+            return await PRContext.RUOLI.FindAsync(ruoliId);
         }
     }
 }

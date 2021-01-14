@@ -51,7 +51,7 @@ namespace PortaleRegione.API.Controllers
             try
             {
                 var response =
-                    ResponseMessage(await _logicEsporta.EsportaGrigliaExcel(id, ordine, SessionManager.Persona));
+                    ResponseMessage(await _logicEsporta.EsportaGrigliaExcel(id, ordine, (await GetSession())));
 
                 return response;
             }
@@ -75,7 +75,7 @@ namespace PortaleRegione.API.Controllers
             try
             {
                 var response =
-                    ResponseMessage(await _logicEsporta.EsportaGrigliaWord(id, ordine, SessionManager.Persona));
+                    ResponseMessage(await _logicEsporta.EsportaGrigliaWord(id, ordine, await GetSession()));
 
                 return response;
             }

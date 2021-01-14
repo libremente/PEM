@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
 using PortaleRegione.Domain;
@@ -37,35 +38,35 @@ namespace PortaleRegione.Persistance
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
 
-        public bool CheckIfCommiExists(Guid articoloUId, string comma)
+        public async Task<bool> CheckIfCommiExists(Guid articoloUId, string comma)
         {
-            return PRContext
+            return await PRContext
                 .COMMI
-                .Any(c => c.UIDArticolo == articoloUId && c.Comma.Contains(comma));
+                .AnyAsync(c => c.UIDArticolo == articoloUId && c.Comma.Contains(comma));
         }
 
-        public IEnumerable<COMMI> GetCommi(Guid articoloUId)
+        public async Task<IEnumerable<COMMI>> GetCommi(Guid articoloUId)
         {
-            return PRContext
+            return await PRContext
                 .COMMI
                 .Where(c => c.UIDArticolo == articoloUId)
                 .OrderBy(c => c.Ordine)
-                .ToList();
+                .ToListAsync();
         }
 
-        public COMMI GetComma(Guid commaUId)
+        public async Task<COMMI> GetComma(Guid commaUId)
         {
-            return PRContext.COMMI.Find(commaUId);
+            return await PRContext.COMMI.FindAsync(commaUId);
         }
 
-        public int OrdineComma(Guid articoloUId)
+        public async Task<int> OrdineComma(Guid articoloUId)
         {
-            var list = PRContext
+            var list = await PRContext
                 .COMMI
                 .Where(c => c.UIDArticolo == articoloUId)
                 .OrderByDescending(c => c.Ordine)
                 .Take(1)
-                .ToList();
+                .ToListAsync();
 
             return list.Any() ? list[0].Ordine.GetValueOrDefault() + 1 : 1;
         }

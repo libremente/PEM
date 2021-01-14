@@ -55,11 +55,11 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("{id:guid}")]
-        public IHttpActionResult GetPersona(Guid id, bool IsGiunta = false)
+        public async Task<IHttpActionResult> GetPersona(Guid id, bool IsGiunta = false)
         {
             try
             {
-                return Ok(_logicPersone.GetPersona(id, IsGiunta));
+                return Ok(await _logicPersone.GetPersona(id, IsGiunta));
             }
             catch (Exception e)
             {
@@ -75,11 +75,11 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("ruolo/{id:int}")]
-        public IHttpActionResult GetRuolo(int id)
+        public async Task<IHttpActionResult> GetRuolo(int id)
         {
             try
             {
-                var ruolo = _unitOfWork.Ruoli.Get(id);
+                var ruolo = await _unitOfWork.Ruoli.Get(id);
                 return Ok(Mapper.Map<RUOLI, RuoliDto>(ruolo));
             }
             catch (Exception e)
@@ -96,11 +96,11 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("gruppo/{id:int}/capo-gruppo")]
-        public IHttpActionResult GetCapoGruppo(int id)
+        public async Task<IHttpActionResult> GetCapoGruppo(int id)
         {
             try
             {
-                var capoGruppo = _unitOfWork.Gruppi.GetCapoGruppo(id);
+                var capoGruppo = await _unitOfWork.Gruppi.GetCapoGruppo(id);
                 return Ok(Mapper.Map<View_UTENTI, PersonaDto>(capoGruppo));
             }
             catch (Exception e)
@@ -120,12 +120,12 @@ namespace PortaleRegione.API.Controllers
         [HttpGet]
         [AllowAnonymous]
         [Route("gruppo/{id:int}/segreteria-politica")]
-        public IHttpActionResult GetSegreteriaPolitica(int id, bool notifica_firma, bool notifica_deposito)
+        public async Task<IHttpActionResult> GetSegreteriaPolitica(int id, bool notifica_firma, bool notifica_deposito)
         {
             try
             {
                 var segreteriaPolitica =
-                    _unitOfWork.Gruppi.GetSegreteriaPolitica(id, notifica_firma, notifica_deposito);
+                    await _unitOfWork.Gruppi.GetSegreteriaPolitica(id, notifica_firma, notifica_deposito);
                 return Ok(segreteriaPolitica.Select(Mapper.Map<UTENTI_NoCons, PersonaDto>));
             }
             catch (Exception e)
@@ -141,11 +141,11 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("giunta-regionale")]
-        public IHttpActionResult GetGiuntaRegionale()
+        public async Task<IHttpActionResult> GetGiuntaRegionale()
         {
             try
             {
-                var giuntaRegionale = _unitOfWork.Persone.GetGiuntaRegionale();
+                var giuntaRegionale = await _unitOfWork.Persone.GetGiuntaRegionale();
                 return Ok(giuntaRegionale.Select(Mapper.Map<View_Composizione_GiuntaRegionale, PersonaDto>));
             }
             catch (Exception e)
@@ -161,12 +161,12 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("assessori")]
-        public IHttpActionResult GetAssessoriRiferimento()
+        public async Task<IHttpActionResult> GetAssessoriRiferimento()
         {
             try
             {
-                var personaDtos = _unitOfWork.Persone
-                    .GetAssessoriRiferimento(_unitOfWork.Legislature.Legislatura_Attiva())
+                var personaDtos = (await _unitOfWork.Persone
+                    .GetAssessoriRiferimento(await _unitOfWork.Legislature.Legislatura_Attiva()))
                     .Select(Mapper.Map<View_UTENTI, PersonaDto>);
 
                 return Ok(personaDtos);
@@ -185,11 +185,11 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("relatori")]
-        public IHttpActionResult GetRelatori(Guid? id)
+        public async Task<IHttpActionResult> GetRelatori(Guid? id)
         {
             try
             {
-                return Ok(_logicPersone.GetRelatori(id));
+                return Ok(await _logicPersone.GetRelatori(id));
             }
             catch (Exception e)
             {
@@ -204,11 +204,11 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("gruppi")]
-        public IHttpActionResult GetGruppi()
+        public async Task<IHttpActionResult> GetGruppi()
         {
             try
             {
-                return Ok(_logicPersone.GetGruppi());
+                return Ok(await _logicPersone.GetGruppi());
             }
             catch (Exception e)
             {
@@ -231,7 +231,8 @@ namespace PortaleRegione.API.Controllers
                 if (model.conferma_pin != model.nuovo_pin)
                     return BadRequest("Il nuovo PIN non combacia con quello di conferma!!!");
 
-                var currentPin = _logicPersone.GetPin(SessionManager.Persona);
+                var persona = await GetSession();
+                var currentPin = await _logicPersone.GetPin(persona);
                 if (currentPin == null)
                     return BadRequest("Pin non impostato");
                 if (currentPin.RichiediModificaPIN)
@@ -246,7 +247,7 @@ namespace PortaleRegione.API.Controllers
                 if (model.nuovo_pin.Length != 4)
                     return BadRequest("Il PIN dev'essere un numero di massimo 4 cifre!");
 
-                model.PersonaUId = SessionManager.Persona.UID_persona;
+                model.PersonaUId = persona.UID_persona;
 
                 await _logicPersone.CambioPin(model);
 
@@ -265,13 +266,13 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [Authorize(Roles = RuoliEnum.Amministratore_PEM + "," + RuoliEnum.Segreteria_Assemblea)]
         [HttpGet]
-        public IHttpActionResult GetPersone()
+        public async Task<IHttpActionResult> GetPersone()
         {
             try
             {
-                var persone = _unitOfWork
+                var persone = (await _unitOfWork
                     .Persone
-                    .GetAll_DA_CANCELLARE()
+                    .GetAll_DA_CANCELLARE())
                     .Select(Mapper.Map<View_UTENTI, PersonaDto>);
 
                 return Ok(persone);
@@ -294,7 +295,7 @@ namespace PortaleRegione.API.Controllers
                 var IntranetADService = new proxyAD();
                 ris = IntranetADService
                     .ChangeADUserPass(
-                        SessionManager.Persona.userAD.Replace(@"CONSIGLIO\", ""),
+                        (await GetSession()).userAD.Replace(@"CONSIGLIO\", ""),
                         string.Empty,
                         nuova,
                         AppSettingsConfiguration.TOKEN_W);

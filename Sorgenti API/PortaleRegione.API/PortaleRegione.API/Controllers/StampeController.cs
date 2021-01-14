@@ -52,7 +52,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var result = await _logic.GetStampe(model, SessionManager.Persona, Request.RequestUri);
+                var result = await _logic.GetStampe(model, (await GetSession()), Request.RequestUri);
                 return Ok(result);
             }
             catch (Exception e)
@@ -72,7 +72,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                await _logic.InserisciStampa(model, SessionManager.Persona);
+                await _logic.InserisciStampa(model, await GetSession());
                 return Ok();
             }
             catch (Exception e)
@@ -92,7 +92,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var stampa = _logic.GetStampa(id);
+                var stampa = await _logic.GetStampa(id);
                 if (stampa == null)
                     return NotFound();
 
@@ -118,7 +118,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var stampa = _logic.GetStampa(id);
+                var stampa = await _logic.GetStampa(id);
                 if (stampa == null)
                     return NotFound();
 

@@ -186,16 +186,16 @@
 @section scripts
 {
     <script>
-        $(document).ready(function() {
+        $(document).ready(async function() {
             var filters = @Html.Raw(Convert.ToInt16(Model.Data.Filters.Any()));
             if (filters == 0)
                 set_Filtri_EM({});
 
-            Filtri_EM_CaricaText1("filter_em_text1");
-            Filtri_EM_CaricaNumeroEM("filter_em_n_em");
-            Filtri_EM_CaricaStatiEM("filter_em_stato");
-            Filtri_EM_CaricaPartiEM("filter_em_parte");
-            Filtri_EM_CaricaTipiEM("filter_em_tipo");
+            await Filtri_EM_CaricaText1("filter_em_text1");
+            await Filtri_EM_CaricaNumeroEM("filter_em_n_em");
+            await Filtri_EM_CaricaStatiEM("filter_em_stato");
+            await Filtri_EM_CaricaPartiEM("filter_em_parte");
+            await Filtri_EM_CaricaTipiEM("filter_em_tipo");
 
             checkSelectedEM();
         });

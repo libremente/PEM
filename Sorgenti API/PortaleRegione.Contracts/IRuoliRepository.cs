@@ -29,7 +29,7 @@ namespace PortaleRegione.Contracts
     {
         Task<IEnumerable<RUOLI>> GetAll(bool soloRuoliGiunta);
 
-        IEnumerable<RUOLI> RuoliUtente(List<string> lstRuoli);
-        RUOLI Get(int ruoliId);
+        Task<IEnumerable<RUOLI>> RuoliUtente(List<string> lstRuoli);
+        Task<RUOLI> Get(int ruoliId);
     }
 }

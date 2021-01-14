@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ExpressionBuilder.Generics;
 using PortaleRegione.Domain;
 
@@ -28,26 +29,26 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface IPersoneRepository : IRepository<View_UTENTI>
     {
-        View_UTENTI Get(string login_windows);
-        View_UTENTI Get(Guid personaUId);
-        View_UTENTI Get(int personaId);
-        IEnumerable<View_UTENTI> GetAll(int page, int size, Filter<View_UTENTI> filtro = null);
-        int CountAll(Filter<View_UTENTI> filtro = null);
-        IEnumerable<View_UTENTI> GetAll_DA_CANCELLARE();
-        IEnumerable<View_UTENTI> GetAssessoriRiferimento(int id_legislatura);
-        IEnumerable<View_UTENTI> GetRelatori(Guid? attoUId);
-        bool IsRelatore(Guid personaUId, Guid attoUId);
-        bool IsAssessore(Guid personaUId, Guid attoUId);
-        string GetCarica(Guid personaUId);
-        View_PINS GetPin(Guid personaUId);
+        Task<View_UTENTI> Get(string login_windows);
+        Task<View_UTENTI> Get(Guid personaUId);
+        Task<View_UTENTI> Get(int personaId);
+        Task<IEnumerable<View_UTENTI>> GetAll(int page, int size, Filter<View_UTENTI> filtro = null);
+        Task<int> CountAll(Filter<View_UTENTI> filtro = null);
+        Task<IEnumerable<View_UTENTI>> GetAll_DA_CANCELLARE();
+        Task<IEnumerable<View_UTENTI>> GetAssessoriRiferimento(int id_legislatura);
+        Task<IEnumerable<View_UTENTI>> GetRelatori(Guid? attoUId);
+        Task<bool> IsRelatore(Guid personaUId, Guid attoUId);
+        Task<bool> IsAssessore(Guid personaUId, Guid attoUId);
+        Task<string> GetCarica(Guid personaUId);
+        Task<View_PINS> GetPin(Guid personaUId);
 
-        IEnumerable<View_UTENTI> GetConsiglieri(int id_legislatura);
+        Task<IEnumerable<View_UTENTI>> GetConsiglieri(int id_legislatura);
 
-        IEnumerable<View_Composizione_GiuntaRegionale> GetGiuntaRegionale();
+        Task<IEnumerable<View_Composizione_GiuntaRegionale>> GetGiuntaRegionale();
 
-        IEnumerable<UTENTI_NoCons> GetSegreteriaGiuntaRegionale(int id, bool notifica_firma,
+        Task<IEnumerable<UTENTI_NoCons>> GetSegreteriaGiuntaRegionale(int id, bool notifica_firma,
             bool notifica_deposito);
 
-        void SavePin(Guid personaUId, string nuovo_pin, bool reset);
+        Task SavePin(Guid personaUId, string nuovo_pin, bool reset);
     }
 }

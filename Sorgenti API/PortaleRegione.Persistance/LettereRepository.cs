@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
 using PortaleRegione.Domain;
@@ -37,35 +38,35 @@ namespace PortaleRegione.Persistance
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
 
-        public bool CheckIfLetteraExists(Guid commaUId, string lettera)
+        public async Task<bool> CheckIfLetteraExists(Guid commaUId, string lettera)
         {
-            return PRContext
+            return await PRContext
                 .LETTERE
-                .Any(a => a.UIDComma == commaUId && a.Lettera.Contains(lettera));
+                .AnyAsync(a => a.UIDComma == commaUId && a.Lettera.Contains(lettera));
         }
 
-        public LETTERE GetLettera(Guid lettaraUId)
+        public async Task<LETTERE> GetLettera(Guid lettaraUId)
         {
-            return PRContext.LETTERE.Find(lettaraUId);
+            return await PRContext.LETTERE.FindAsync(lettaraUId);
         }
 
-        public IEnumerable<LETTERE> GetLettere(Guid commaUId)
+        public async Task<IEnumerable<LETTERE>> GetLettere(Guid commaUId)
         {
-            return PRContext
+            return await PRContext
                 .LETTERE
                 .Where(l => l.UIDComma == commaUId)
                 .OrderBy(l => l.Ordine)
-                .ToList();
+                .ToListAsync();
         }
 
-        public int OrdineLettera(Guid commaUId)
+        public async Task<int> OrdineLettera(Guid commaUId)
         {
-            var list = PRContext
+            var list = await PRContext
                 .LETTERE
                 .Where(a => a.UIDComma == commaUId)
                 .OrderByDescending(a => a.Ordine)
                 .Take(1)
-                .ToList();
+                .ToListAsync();
 
             return list.Any() ? list[0].Ordine + 1 : 1;
         }

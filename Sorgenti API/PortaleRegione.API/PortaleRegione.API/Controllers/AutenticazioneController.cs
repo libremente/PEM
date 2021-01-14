@@ -113,7 +113,7 @@ namespace PortaleRegione.API.Controllers
 #if DEBUG == true
                 }
 #endif
-                var persona = _unitOfWork.Persone.Get(@"CONSIGLIO\" + loginModel.Username);
+                var persona = await _unitOfWork.Persone.Get(@"CONSIGLIO\" + loginModel.Username);
                 if (persona == null)
                     return BadRequest(
                         "Autenticazione corretta, ma l'utente non risulta presente nel sistema. Contattare l'amministratore di sistema.");
@@ -130,9 +130,9 @@ namespace PortaleRegione.API.Controllers
                 foreach (var group in Gruppi_Utente)
                     lRuoli.Add($"CONSIGLIO\\{group}");
 
-                personaDto.Carica = _logicPersone.GetCaricaPersona(personaDto.UID_persona);
+                personaDto.Carica = await _logicPersone.GetCaricaPersona(personaDto.UID_persona);
 
-                var token = GetToken(personaDto, lRuoli);
+                var token = await GetToken(personaDto, lRuoli);
 
                 return Ok(new LoginResponse
                 {
@@ -155,31 +155,31 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [Authorize]
         [HttpGet]
-        public IHttpActionResult GetToken(RuoliIntEnum ruolo)
+        public async Task<IHttpActionResult> GetToken(RuoliIntEnum ruolo)
         {
             try
             {
-                var ruoloInDb = _unitOfWork.Ruoli.Get((int) ruolo);
+                var ruoloInDb = await _unitOfWork.Ruoli.Get((int) ruolo);
                 if (ruoloInDb == null)
                     return BadRequest("Ruolo non trovato");
 
+                var persona = await GetSession();
                 var intranetAdService = new proxyAD();
                 var Gruppi_Utente = new List<string>(intranetAdService.GetGroups(
-                    SessionManager.Persona.userAD.Replace(@"CONSIGLIO\", ""), "PEM_",
+                    persona.userAD.Replace(@"CONSIGLIO\", ""), "PEM_",
                     AppSettingsConfiguration.TOKEN_R));
 
                 var lRuoli = Gruppi_Utente.Select(group => $"CONSIGLIO\\{group}").ToList();
 
-                var ruoli_utente = _unitOfWork.Ruoli.RuoliUtente(lRuoli).ToList();
+                var ruoli_utente = (await _unitOfWork.Ruoli.RuoliUtente(lRuoli)).ToList();
 
                 var ruoloAccessibile = ruoli_utente.SingleOrDefault(r => r.IDruolo == (int) ruolo);
                 if (ruoloAccessibile == null)
                     return BadRequest("Ruolo non accessibile");
 
-                var persona = SessionManager.Persona;
                 persona.CurrentRole = ruolo;
-                persona.Gruppo = _unitOfWork.Gruppi.GetGruppoPersona(lRuoli, persona.IsGiunta());
-                persona.Carica = _logicPersone.GetCaricaPersona(persona.UID_persona);
+                persona.Gruppo = await _unitOfWork.Gruppi.GetGruppoPersona(lRuoli, persona.IsGiunta());
+                persona.Carica = await _logicPersone.GetCaricaPersona(persona.UID_persona);
 
                 var token = GetToken(persona);
 
@@ -204,16 +204,16 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [Authorize]
         [HttpGet]
-        public IHttpActionResult GetToken(int gruppo)
+        public async Task<IHttpActionResult> GetToken(int gruppo)
         {
             try
             {
-                var gruppoInDb = _unitOfWork.Gruppi.Get(gruppo);
+                var gruppoInDb = await _unitOfWork.Gruppi.Get(gruppo);
                 if (gruppoInDb == null)
                     return BadRequest("ListaGruppo non trovato");
 
                 var gruppoDto = Mapper.Map<gruppi_politici, GruppiDto>(gruppoInDb);
-                var persona = SessionManager.Persona;
+                var persona = await GetSession();
                 persona.Gruppo = gruppoDto;
                 persona.CurrentRole = RuoliIntEnum.Responsabile_Segreteria_Politica;
                 var token = GetToken(persona);
@@ -240,7 +240,7 @@ namespace PortaleRegione.API.Controllers
         /// <param name="personaDto"></param>
         /// <param name="lRuoli_Gruppi"></param>
         /// <returns></returns>
-        private string GetToken(PersonaDto personaDto, List<string> lRuoli_Gruppi)
+        private async Task<string> GetToken(PersonaDto personaDto, List<string> lRuoli_Gruppi)
         {
             try
             {
@@ -248,10 +248,10 @@ namespace PortaleRegione.API.Controllers
                 var key = Encoding.ASCII.GetBytes(
                     AppSettingsConfiguration.JWT_MASTER);
 
-                var ruoli_utente = _unitOfWork.Ruoli.RuoliUtente(lRuoli_Gruppi).ToList();
+                var ruoli_utente = (await _unitOfWork.Ruoli.RuoliUtente(lRuoli_Gruppi)).ToList();
                 personaDto.Ruoli = ruoli_utente.Select(Mapper.Map<RUOLI, RuoliDto>);
                 personaDto.CurrentRole = (RuoliIntEnum) ruoli_utente[0].IDruolo;
-                personaDto.Gruppo = _unitOfWork.Gruppi.GetGruppoPersona(lRuoli_Gruppi, personaDto.IsGiunta());
+                personaDto.Gruppo = await _unitOfWork.Gruppi.GetGruppoPersona(lRuoli_Gruppi, personaDto.IsGiunta());
 
                 var claims = new List<Claim>
                 {

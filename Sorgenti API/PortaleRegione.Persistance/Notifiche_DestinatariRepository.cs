@@ -17,7 +17,9 @@
  */
 
 using System;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
 using PortaleRegione.Domain;
@@ -35,18 +37,18 @@ namespace PortaleRegione.Persistance
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
 
-        public NOTIFICHE_DESTINATARI Get(long notificaId, Guid personaUId)
+        public async Task<NOTIFICHE_DESTINATARI> Get(long notificaId, Guid personaUId)
         {
-            return PRContext.NOTIFICHE_DESTINATARI.SingleOrDefault(nd =>
+            return await PRContext.NOTIFICHE_DESTINATARI.SingleOrDefaultAsync(nd =>
                 nd.UIDNotifica == notificaId && nd.UIDPersona == personaUId);
         }
 
-        public bool ExistDestinatarioNotifica(Guid emendamentoUId, Guid personaUId)
+        public async Task<bool> ExistDestinatarioNotifica(Guid emendamentoUId, Guid personaUId)
         {
-            var listaDestinatariEM = PRContext
+            var listaDestinatariEM = await PRContext
                 .NOTIFICHE_DESTINATARI
                 .Where(nd => nd.NOTIFICHE.UIDEM == emendamentoUId && nd.UIDPersona == personaUId)
-                .ToList();
+                .ToListAsync();
 
             return listaDestinatariEM.Any();
         }

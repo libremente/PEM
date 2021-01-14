@@ -70,23 +70,23 @@ namespace PortaleRegione.API.Controllers
 
             try
             {
-                var atto = _logicAtti.GetAtto(model.id);
+                var atto = await _logicAtti.GetAtto(model.id);
 
                 if (atto == null)
                     return NotFound();
 
                 object CLIENT_MODE;
                 model.param.TryGetValue("CLIENT_MODE", out CLIENT_MODE); // per trattazione aula
-
+                var persona = await GetSession();
                 var results =
-                    await _logicEm.GetEmendamenti(model, SessionManager.Persona, Convert.ToInt16(CLIENT_MODE));
+                    await _logicEm.GetEmendamenti(model, persona, Convert.ToInt16(CLIENT_MODE));
 
                 return Ok(new BaseResponse<EmendamentiDto>(
                     model.page,
                     model.size,
                     results,
                     model.filtro,
-                    _logicEm.CountEM(model, SessionManager.Persona, Convert.ToInt16(CLIENT_MODE)),
+                    await _logicEm.CountEM(model, persona, Convert.ToInt16(CLIENT_MODE)),
                     Request.RequestUri));
             }
             catch (Exception e)
@@ -106,11 +106,11 @@ namespace PortaleRegione.API.Controllers
             ///TODO: implementare i controlli anche sull'atto
             try
             {
-                var em = _logicEm.GetEM(id);
+                var em = await _logicEm.GetEM(id);
                 if (em == null)
                     return NotFound();
 
-                return Ok(await _logicEm.GetEM_DTO(em, SessionManager.Persona));
+                return Ok(await _logicEm.GetEM_DTO(em, await GetSession()));
             }
             catch (Exception e)
             {
@@ -135,11 +135,11 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var atti = _logicAtti.GetAtto(id);
+                var atti = await _logicAtti.GetAtto(id);
                 if (atti == null)
                     return NotFound();
 
-                return Ok(await _logicEm.ModelloNuovoEM(atti, em_riferimentoUId, SessionManager.Persona));
+                return Ok(await _logicEm.ModelloNuovoEM(atti, em_riferimentoUId, await GetSession()));
             }
             catch (Exception e)
             {
@@ -163,12 +163,12 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var countFirme = _unitOfWork.Firme.CountFirme(id);
+                var countFirme = await _unitOfWork.Firme.CountFirme(id);
                 if (countFirme > 1)
                     return BadRequest(
                         $"Non è possibile modificare l'emendamento. Ci sono ancora {countFirme} firme attive.");
 
-                return Ok(await _logicEm.ModelloModificaEM(_logicEm.GetEM(id), SessionManager.Persona));
+                return Ok(await _logicEm.ModelloModificaEM(await _logicEm.GetEM(id), await GetSession()));
             }
             catch (Exception e)
             {
@@ -215,7 +215,7 @@ namespace PortaleRegione.API.Controllers
                         return BadRequest("I valori Missione - Programma - Titolo sono obbligatori");
 
                 var isGiunta = model.Emendamento.id_gruppo == AppSettingsConfiguration.GIUNTA_REGIONALE_ID;
-                var proponente = _logicPersone.GetPersona(model.Emendamento.UIDPersonaProponente.Value, isGiunta);
+                var proponente = await _logicPersone.GetPersona(model.Emendamento.UIDPersonaProponente.Value, isGiunta);
 
                 var em = await _logicEm.NuovoEmendamento(model.Emendamento, proponente, isGiunta);
                 return Created(new Uri(Request.RequestUri + "/" + em.UIDEM), em);
@@ -242,21 +242,21 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var em = _logicEm.GetEM(model.UIDEM);
+                var em = await _logicEm.GetEM(model.UIDEM);
 
                 if (em == null)
                     return NotFound();
-
-                if (SessionManager.Persona.CurrentRole != RuoliIntEnum.Amministratore_PEM
-                    && SessionManager.Persona.CurrentRole != RuoliIntEnum.Segreteria_Assemblea)
+                var persona = await GetSession();
+                if (persona.CurrentRole != RuoliIntEnum.Amministratore_PEM
+                    && persona.CurrentRole != RuoliIntEnum.Segreteria_Assemblea)
                 {
-                    var countFirme = _unitOfWork.Firme.CountFirme(model.UIDEM);
+                    var countFirme = await _unitOfWork.Firme.CountFirme(model.UIDEM);
                     if (countFirme > 1)
                         return BadRequest(
                             $"Non è possibile modificare l'emendamento. Ci sono ancora {countFirme} attive.");
                 }
 
-                await _logicEm.ModificaEmendamento(model, em, SessionManager.Persona);
+                await _logicEm.ModificaEmendamento(model, em, persona);
 
                 return Ok();
             }
@@ -277,15 +277,15 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var em = _logicEm.GetEM(id);
+                var em = await _logicEm.GetEM(id);
                 if (em == null)
                     return NotFound();
 
-                var countFirme = _unitOfWork.Firme.CountFirme(id);
+                var countFirme = await _unitOfWork.Firme.CountFirme(id);
                 if (countFirme > 0)
                     return BadRequest("L'emendamento ha delle firme attive e non può essere eliminato");
 
-                await _logicEm.DeleteEmendamento(em, SessionManager.Persona);
+                await _logicEm.DeleteEmendamento(em, await GetSession());
 
                 return Ok();
             }
@@ -307,11 +307,11 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var em = _logicEm.GetEM(id);
+                var em = await _logicEm.GetEM(id);
                 if (em == null)
                     return NotFound();
 
-                var result = _logicFirme.GetFirme(em, tipo);
+                var result = await _logicFirme.GetFirme(em, tipo);
                 var resultDto = result.Select(Mapper.Map<FIRME, FirmeDto>);
 
                 return Ok(resultDto);
@@ -333,11 +333,11 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var em = _logicEm.GetEM(id);
+                var em = await _logicEm.GetEM(id);
                 if (em == null)
                     return NotFound();
 
-                return Ok(_logicEm.GetInvitati(em));
+                return Ok(await _logicEm.GetInvitati(em));
             }
             catch (Exception e)
             {
@@ -357,13 +357,13 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var em = _logicEm.GetEM(model.Id);
+                var em = await _logicEm.GetEM(model.Id);
                 if (em == null)
                     return NotFound();
 
                 var body = await _logicEm.GetBodyEM(em
-                    , _logicFirme.GetFirme(em, FirmeTipoEnum.TUTTE)
-                    , SessionManager.Persona
+                    , await _logicFirme.GetFirme(em, FirmeTipoEnum.TUTTE)
+                    , await GetSession()
                     , model.Template
                     , model.IsDeposito);
 
@@ -415,18 +415,18 @@ namespace PortaleRegione.API.Controllers
                 if (firmaModel.ListaEmendamenti.Count > Convert.ToInt16(AppSettingsConfiguration.LimiteFirmaMassivo))
                     return BadRequest(
                         $"Non è possibile firmare contemporaneamente più di {AppSettingsConfiguration.LimiteFirmaMassivo} emendamenti");
-
-                var firmaUfficio = SessionManager.Persona.CurrentRole == RuoliIntEnum.Amministratore_PEM ||
-                                   SessionManager.Persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea;
+                var persona = (await GetSession());
+                var firmaUfficio = persona.CurrentRole == RuoliIntEnum.Amministratore_PEM ||
+                                   persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea;
 
                 if (firmaUfficio)
                 {
                     if (firmaModel.Pin != AppSettingsConfiguration.MasterPIN)
                         return BadRequest("Pin inserito non valido");
-                    return Ok(await _logicEm.FirmaEmendamento(firmaModel, SessionManager.Persona, null, true));
+                    return Ok(await _logicEm.FirmaEmendamento(firmaModel, persona, null, true));
                 }
 
-                var pinInDb = _logicPersone.GetPin(SessionManager.Persona);
+                var pinInDb = await _logicPersone.GetPin(persona);
                 if (pinInDb == null)
                     return BadRequest("Pin non impostato");
                 if (pinInDb.RichiediModificaPIN)
@@ -434,7 +434,7 @@ namespace PortaleRegione.API.Controllers
                 if (firmaModel.Pin != pinInDb.PIN_Decrypt)
                     return BadRequest("Pin inserito non valido");
 
-                return Ok(await _logicEm.FirmaEmendamento(firmaModel, SessionManager.Persona, pinInDb));
+                return Ok(await _logicEm.FirmaEmendamento(firmaModel, (await GetSession()), pinInDb));
             }
             catch (Exception e)
             {
@@ -454,17 +454,18 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var firmaUfficio = SessionManager.Persona.CurrentRole == RuoliIntEnum.Amministratore_PEM ||
-                                   SessionManager.Persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea;
+                var persona = (await GetSession());
+                var firmaUfficio = persona.CurrentRole == RuoliIntEnum.Amministratore_PEM ||
+                                   persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea;
 
                 if (firmaUfficio)
                 {
                     if (firmaModel.Pin != AppSettingsConfiguration.MasterPIN)
                         return BadRequest("Pin inserito non valido");
-                    return Ok(await _logicEm.RitiroFirmaEmendamento(firmaModel, SessionManager.Persona));
+                    return Ok(await _logicEm.RitiroFirmaEmendamento(firmaModel, persona));
                 }
 
-                var pinInDb = _logicPersone.GetPin(SessionManager.Persona);
+                var pinInDb = await _logicPersone.GetPin(persona);
                 if (pinInDb == null)
                     return BadRequest("Pin non impostato");
                 if (pinInDb.RichiediModificaPIN)
@@ -472,7 +473,7 @@ namespace PortaleRegione.API.Controllers
                 if (firmaModel.Pin != pinInDb.PIN_Decrypt)
                     return BadRequest("Pin inserito non valido");
 
-                return Ok(await _logicEm.RitiroFirmaEmendamento(firmaModel, SessionManager.Persona));
+                return Ok(await _logicEm.RitiroFirmaEmendamento(firmaModel, persona));
             }
             catch (Exception e)
             {
@@ -492,7 +493,8 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var pinInDb = _logicPersone.GetPin(SessionManager.Persona);
+                var persona = (await GetSession());
+                var pinInDb = await _logicPersone.GetPin(persona);
                 if (pinInDb == null)
                     return BadRequest("Pin non impostato");
                 if (pinInDb.RichiediModificaPIN)
@@ -500,7 +502,7 @@ namespace PortaleRegione.API.Controllers
                 if (firmaModel.Pin != pinInDb.PIN_Decrypt)
                     return BadRequest("Pin inserito non valido");
 
-                return Ok(await _logicEm.EliminaFirmaEmendamento(firmaModel, SessionManager.Persona));
+                return Ok(await _logicEm.EliminaFirmaEmendamento(firmaModel, persona));
             }
             catch (Exception e)
             {
@@ -529,17 +531,18 @@ namespace PortaleRegione.API.Controllers
                     return BadRequest(
                         $"Non è possibile depositare contemporaneamente più di {AppSettingsConfiguration.LimiteDepositoMassivo} emendamenti");
 
-                var depositoUfficio = SessionManager.Persona.CurrentRole == RuoliIntEnum.Amministratore_PEM ||
-                                      SessionManager.Persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea;
+                var persona = (await GetSession());
+                var depositoUfficio = persona.CurrentRole == RuoliIntEnum.Amministratore_PEM ||
+                                      persona.CurrentRole == RuoliIntEnum.Segreteria_Assemblea;
 
                 if (depositoUfficio)
                 {
                     if (depositoModel.Pin != AppSettingsConfiguration.MasterPIN)
                         return BadRequest("Pin inserito non valido");
-                    return Ok(await _logicEm.DepositaEmendamento(depositoModel, SessionManager.Persona));
+                    return Ok(await _logicEm.DepositaEmendamento(depositoModel, persona));
                 }
 
-                var pinInDb = _logicPersone.GetPin(SessionManager.Persona);
+                var pinInDb = await _logicPersone.GetPin(persona);
                 if (pinInDb == null)
                     return BadRequest("Pin non impostato");
                 if (pinInDb.RichiediModificaPIN)
@@ -547,7 +550,7 @@ namespace PortaleRegione.API.Controllers
                 if (depositoModel.Pin != pinInDb.PIN_Decrypt)
                     return BadRequest("Pin inserito non valido");
 
-                return Ok(await _logicEm.DepositaEmendamento(depositoModel, SessionManager.Persona));
+                return Ok(await _logicEm.DepositaEmendamento(depositoModel, persona));
             }
             catch (Exception e)
             {
@@ -571,7 +574,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var em = _logicEm.GetEM(id);
+                var em = await _logicEm.GetEM(id);
                 if (em == null)
                     return NotFound();
 
@@ -579,7 +582,7 @@ namespace PortaleRegione.API.Controllers
                     return BadRequest(
                         "Non è possibile ritirare l'emendamento durante lo svolgimento della seduta: annuncia in Aula l'intenzione di ritiro");
 
-                await _logicEm.RitiraEmendamento(em, SessionManager.Persona);
+                await _logicEm.RitiraEmendamento(em, (await GetSession()));
 
                 return Ok();
             }
@@ -601,17 +604,17 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var em = _logicEm.GetEM(id);
+                var em = await _logicEm.GetEM(id);
                 if (em == null)
                     return NotFound();
-                var firmatari = _logicFirme.GetFirme(em, FirmeTipoEnum.ATTIVI);
+                var firmatari = await _logicFirme.GetFirme(em, FirmeTipoEnum.ATTIVI);
                 var firmatari_attivi = firmatari.Where(f => string.IsNullOrEmpty(f.Data_ritirofirma));
                 if (firmatari_attivi.Any())
                     return BadRequest("L'emendamento ha delle firme attive e non può essere eliminato");
 
                 em.Eliminato = true;
                 em.DataElimina = DateTime.Now;
-                em.UIDPersonaElimina = SessionManager.Persona.UID_persona;
+                em.UIDPersonaElimina = (await GetSession()).UID_persona;
 
                 await _unitOfWork.CompleteAsync();
 
@@ -637,7 +640,7 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                return Ok(await _logicEm.ModelloModificaEM(_logicEm.GetEM(id), SessionManager.Persona));
+                return Ok(await _logicEm.ModelloModificaEM(await _logicEm.GetEM(id), (await GetSession())));
             }
             catch (Exception e)
             {
@@ -658,12 +661,12 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var em = _logicEm.GetEM(model.UIDEM);
+                var em = await _logicEm.GetEM(model.UIDEM);
 
                 if (em == null)
                     return NotFound();
 
-                await _logicEm.ModificaMetaDatiEmendamento(model, em, SessionManager.Persona);
+                await _logicEm.ModificaMetaDatiEmendamento(model, em, (await GetSession()));
 
                 return Ok();
             }
@@ -715,7 +718,7 @@ namespace PortaleRegione.API.Controllers
 
                 foreach (var idGuid in model.ListaEmendamenti)
                 {
-                    var em = _logicEm.GetEM(idGuid);
+                    var em = await _logicEm.GetEM(idGuid);
                     if (em == null)
                     {
                         results.Add(idGuid, "ERROR: NON TROVATO");
@@ -729,12 +732,12 @@ namespace PortaleRegione.API.Controllers
                         continue;
                     }
 
-                    var persona = _unitOfWork.Persone.Get(model.NuovoProponente);
+                    var persona = await _unitOfWork.Persone.Get(model.NuovoProponente);
                     em.IDStato = (int) StatiEnum.Depositato;
                     em.UIDPersonaProponenteOLD = em.UIDPersonaProponente;
                     em.UIDPersonaProponente = model.NuovoProponente;
-                    em.id_gruppo = _logicPersone
-                        .GetGruppoAttualePersona(Mapper.Map<View_UTENTI, PersonaDto>(persona), model.IsAssessore)
+                    em.id_gruppo = (await _logicPersone
+                            .GetGruppoAttualePersona(Mapper.Map<View_UTENTI, PersonaDto>(persona), model.IsAssessore))
                         .id_gruppo;
 
                     await _unitOfWork.CompleteAsync();
@@ -766,7 +769,7 @@ namespace PortaleRegione.API.Controllers
 
                 foreach (var idGuid in model.ListaEmendamenti)
                 {
-                    var em = _logicEm.GetEM(idGuid);
+                    var em = await _logicEm.GetEM(idGuid);
                     if (em == null)
                     {
                         results.Add(idGuid, "ERROR: NON TROVATO");
@@ -907,7 +910,7 @@ namespace PortaleRegione.API.Controllers
                 return ErrorHandler(e);
             }
         }
-        
+
         /// <summary>
         ///     Endpoint per avere i tipi di emendmento
         /// </summary>
@@ -926,7 +929,7 @@ namespace PortaleRegione.API.Controllers
                 return ErrorHandler(e);
             }
         }
-        
+
         /// <summary>
         ///     Endpoint per avere le missioni
         /// </summary>
@@ -945,7 +948,7 @@ namespace PortaleRegione.API.Controllers
                 return ErrorHandler(e);
             }
         }
-        
+
         /// <summary>
         ///     Endpoint per avere i titoli / missione
         /// </summary>
@@ -964,7 +967,7 @@ namespace PortaleRegione.API.Controllers
                 return ErrorHandler(e);
             }
         }
-        
+
         /// <summary>
         ///     Endpoint per avere gli stati
         /// </summary>

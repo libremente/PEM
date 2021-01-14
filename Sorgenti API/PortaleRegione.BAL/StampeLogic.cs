@@ -48,11 +48,11 @@ namespace PortaleRegione.BAL
 
         #region GetStampa
 
-        public STAMPE GetStampa(Guid id)
+        public async Task<STAMPE> GetStampa(Guid id)
         {
             try
             {
-                var result = _unitOfWork.Stampe.Get(id);
+                var result = await _unitOfWork.Stampe.Get(id);
                 return result;
             }
             catch (Exception e)
@@ -108,7 +108,7 @@ namespace PortaleRegione.BAL
         {
             try
             {
-                foreach (var stampa in listaStampe.Select(stampaDto => _unitOfWork.Stampe.Get(stampaDto.UIDStampa)))
+                foreach (var stampa in listaStampe)
                 {
                     stampa.Lock = true;
                     stampa.DataLock = DateTime.Now;
@@ -133,7 +133,7 @@ namespace PortaleRegione.BAL
         {
             try
             {
-                var stampa = _unitOfWork.Stampe.Get(stampaUId);
+                var stampa = await _unitOfWork.Stampe.Get(stampaUId);
                 stampa.Lock = false;
 
                 await _unitOfWork.CompleteAsync();
@@ -176,7 +176,7 @@ namespace PortaleRegione.BAL
         {
             try
             {
-                var stampa = _unitOfWork.Stampe.Get(model.stampaUId);
+                var stampa = await _unitOfWork.Stampe.Get(model.stampaUId);
                 stampa.DataFineEsecuzione = DateTime.Now;
                 stampa.MessaggioErrore = model.messaggio;
 
@@ -197,7 +197,7 @@ namespace PortaleRegione.BAL
         {
             try
             {
-                var stampaInDb = _unitOfWork.Stampe.Get(stampa.UIDStampa);
+                var stampaInDb = await _unitOfWork.Stampe.Get(stampa.UIDStampa);
                 stampaInDb.DataFineEsecuzione = DateTime.Now;
                 stampaInDb.PathFile = stampa.PathFile;
 
@@ -218,7 +218,7 @@ namespace PortaleRegione.BAL
         {
             try
             {
-                var stampaInDb = _unitOfWork.Stampe.Get(stampa.UIDStampa);
+                var stampaInDb = await _unitOfWork.Stampe.Get(stampa.UIDStampa);
                 stampaInDb.Invio = true;
                 stampaInDb.DataInvio = DateTime.Now;
 
@@ -282,14 +282,14 @@ namespace PortaleRegione.BAL
                 var queryFilter = new Filter<STAMPE>();
                 queryFilter.ImportStatements(model.filtro);
 
-                var result = _unitOfWork.Stampe.GetAll(persona, model.page, model.size, queryFilter)
+                var result = (await _unitOfWork.Stampe.GetAll(persona, model.page, model.size, queryFilter))
                     .Select(Mapper.Map<STAMPE, StampaDto>);
                 return new BaseResponse<StampaDto>(
                     model.page,
                     model.size,
                     result,
                     model.filtro,
-                    _unitOfWork.Stampe.Count(persona, queryFilter),
+                    await _unitOfWork.Stampe.Count(persona, queryFilter),
                     url);
             }
             catch (Exception e)
@@ -305,7 +305,7 @@ namespace PortaleRegione.BAL
             {
                 Log.Debug($"Logic - GetStampe - page[{model.page}], pageSize[{model.size}]");
 
-                var result = _unitOfWork.Stampe.GetAll(model.page, model.size)
+                var result = (await _unitOfWork.Stampe.GetAll(model.page, model.size))
                     .Select(Mapper.Map<STAMPE, StampaDto>);
 
                 await LockStampa(result);
@@ -315,7 +315,7 @@ namespace PortaleRegione.BAL
                     model.size,
                     result,
                     model.filtro,
-                    _unitOfWork.Stampe.Count(),
+                    await _unitOfWork.Stampe.Count(),
                     url);
             }
             catch (Exception e)

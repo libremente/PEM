@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using PortaleRegione.Contracts;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Domain;
@@ -34,17 +35,17 @@ namespace PortaleRegione.BAL
             _unitOfWork = unitOfWork;
         }
 
-        public IEnumerable<FIRME> GetFirme(EmendamentiDto emDto, FirmeTipoEnum tipo)
+        public async Task<IEnumerable<FIRME>> GetFirme(EmendamentiDto emDto, FirmeTipoEnum tipo)
         {
-            var em = _unitOfWork.Emendamenti.Get(emDto.UIDEM);
-            return GetFirme(em, tipo);
+            var em = await _unitOfWork.Emendamenti.Get(emDto.UIDEM);
+            return await GetFirme(em, tipo);
         }
 
-        public IEnumerable<FIRME> GetFirme(EM em, FirmeTipoEnum tipo)
+        public async Task<IEnumerable<FIRME>> GetFirme(EM em, FirmeTipoEnum tipo)
         {
             try
             {
-                var result = _unitOfWork
+                var result = await _unitOfWork
                     .Firme
                     .GetFirmatari(em, tipo);
 
@@ -67,11 +68,11 @@ namespace PortaleRegione.BAL
             }
         }
 
-        public int CountFirme(Guid emendamentoUId)
+        public async Task<int> CountFirme(Guid emendamentoUId)
         {
             try
             {
-                return _unitOfWork
+                return await _unitOfWork
                     .Firme
                     .CountFirme(emendamentoUId);
             }

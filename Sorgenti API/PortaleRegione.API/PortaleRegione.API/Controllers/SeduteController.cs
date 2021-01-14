@@ -51,11 +51,11 @@ namespace PortaleRegione.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("view")]
-        public IHttpActionResult GetSedute(BaseRequest<SeduteDto> model)
+        public async Task<IHttpActionResult> GetSedute(BaseRequest<SeduteDto> model)
         {
             try
             {
-                return Ok(_logic.GetSedute(model, Request.RequestUri));
+                return Ok(await _logic.GetSedute(model, Request.RequestUri));
             }
             catch (Exception e)
             {
@@ -70,11 +70,11 @@ namespace PortaleRegione.API.Controllers
         /// <param name="id">Guid seduta</param>
         /// <returns></returns>
         [HttpGet]
-        public IHttpActionResult GetSeduta(Guid id)
+        public async Task<IHttpActionResult> GetSeduta(Guid id)
         {
             try
             {
-                var result = _logic.GetSeduta(id);
+                var result = await _logic.GetSeduta(id);
 
                 if (result == null)
                     return NotFound();
@@ -102,12 +102,12 @@ namespace PortaleRegione.API.Controllers
                 if (id == Guid.Empty)
                     return BadRequest();
 
-                var sedutaInDb = _logic.GetSeduta(id);
+                var sedutaInDb = await _logic.GetSeduta(id);
 
                 if (sedutaInDb == null)
                     return NotFound();
 
-                await _logic.DeleteSeduta(Mapper.Map<SEDUTE, SeduteDto>(sedutaInDb), SessionManager.Persona);
+                await _logic.DeleteSeduta(Mapper.Map<SEDUTE, SeduteDto>(sedutaInDb), await GetSession());
 
                 return Ok();
             }
@@ -131,7 +131,7 @@ namespace PortaleRegione.API.Controllers
             {
                 var seduta =
                     Mapper.Map<SEDUTE, SeduteDto>(await _logic.NuovaSeduta(Mapper.Map<SeduteDto, SEDUTE>(sedutaDto),
-                        SessionManager.Persona));
+                        await GetSession()));
                 return Created(new Uri(Request.RequestUri + "/" + seduta.UIDSeduta), seduta);
             }
             catch (Exception e)
@@ -152,12 +152,12 @@ namespace PortaleRegione.API.Controllers
         {
             try
             {
-                var sedutaInDb = _logic.GetSeduta(sedutaDto.UIDSeduta);
+                var sedutaInDb = await _logic.GetSeduta(sedutaDto.UIDSeduta);
 
                 if (sedutaInDb == null)
                     return NotFound();
 
-                await _logic.ModificaSeduta(sedutaDto, SessionManager.Persona);
+                await _logic.ModificaSeduta(sedutaDto, await GetSession());
 
                 return Ok();
             }
@@ -178,7 +178,7 @@ namespace PortaleRegione.API.Controllers
         [Route("legislature")]
         public async Task<IHttpActionResult> GetLegislature()
         {
-            return Ok(_logic.GetLegislature());
+            return Ok(await _logic.GetLegislature());
         }
 
         #endregion

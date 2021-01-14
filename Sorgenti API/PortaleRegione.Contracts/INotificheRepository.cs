@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ExpressionBuilder.Generics;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Domain;
@@ -29,18 +30,18 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface INotificheRepository : IRepository<NOTIFICHE>
     {
-        IEnumerable<NOTIFICHE> GetNotificheInviate(PersonaDto currentUser, int idGruppo, bool Archivio, int pageIndex,
+        Task<IEnumerable<NOTIFICHE>> GetNotificheInviate(PersonaDto currentUser, int idGruppo, bool Archivio, int pageIndex,
             int pageSize,
             Filter<NOTIFICHE> filtro = null);
 
-        IEnumerable<NOTIFICHE> GetNotificheRicevute(PersonaDto currentUser, int idGruppo, bool Archivio, int pageIndex,
+        Task<IEnumerable<NOTIFICHE>> GetNotificheRicevute(PersonaDto currentUser, int idGruppo, bool Archivio, int pageIndex,
             int pageSize,
             Filter<NOTIFICHE> filtro = null);
 
-        int CountInviate(PersonaDto currentUser, int idGruppo, bool Archivio, Filter<NOTIFICHE> filtro = null);
-        int CountRicevute(PersonaDto currentUser, int idGruppo, bool Archivio, Filter<NOTIFICHE> filtro = null);
-        NOTIFICHE Get(Guid notificaUId);
-        IEnumerable<NOTIFICHE_DESTINATARI> GetDestinatariNotifica(long notificaId);
+        Task<int> CountInviate(PersonaDto currentUser, int idGruppo, bool Archivio, Filter<NOTIFICHE> filtro = null);
+        Task<int> CountRicevute(PersonaDto currentUser, int idGruppo, bool Archivio, Filter<NOTIFICHE> filtro = null);
+        Task<NOTIFICHE> Get(Guid notificaUId);
+        Task<IEnumerable<NOTIFICHE_DESTINATARI>> GetDestinatariNotifica(long notificaId);
 
         bool CheckIfNotificabile(EmendamentiDto em, PersonaDto persona);
     }

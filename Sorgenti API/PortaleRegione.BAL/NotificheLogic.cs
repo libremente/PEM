@@ -54,7 +54,8 @@ namespace PortaleRegione.BAL
 
         #region GetNotificheInviate
 
-        public IEnumerable<NotificaDto> GetNotificheInviate(BaseRequest<NotificaDto> model, PersonaDto currentUser,
+        public async Task<IEnumerable<NotificaDto>> GetNotificheInviate(BaseRequest<NotificaDto> model,
+            PersonaDto currentUser,
             bool Archivio)
         {
             try
@@ -68,15 +69,15 @@ namespace PortaleRegione.BAL
                     || currentUser.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Giunta)
                     idGruppo = currentUser.Gruppo.id_gruppo;
 
-                var result = _unitOfWork.Notifiche
-                    .GetNotificheInviate(currentUser, idGruppo, Archivio, model.page, model.size, queryFilter)
+                var result = (await _unitOfWork.Notifiche
+                        .GetNotificheInviate(currentUser, idGruppo, Archivio, model.page, model.size, queryFilter))
                     .Select(Mapper.Map<NOTIFICHE, NotificaDto>)
                     .ToList();
 
                 result.ForEach(async notifica =>
                 {
                     notifica.EM = await _logicEm.GetEM_DTO(notifica.UIDEM, currentUser);
-                    notifica.UTENTI_NoCons = _logicPersone.GetPersona(notifica.Mittente,
+                    notifica.UTENTI_NoCons = await _logicPersone.GetPersona(notifica.Mittente,
                         notifica.EM.id_gruppo >= AppSettingsConfiguration.GIUNTA_REGIONALE_ID);
                 });
 
@@ -93,7 +94,8 @@ namespace PortaleRegione.BAL
 
         #region GetNotificheRicevute
 
-        public IEnumerable<NotificaDto> GetNotificheRicevute(BaseRequest<NotificaDto> model, PersonaDto currentUser,
+        public async Task<IEnumerable<NotificaDto>> GetNotificheRicevute(BaseRequest<NotificaDto> model,
+            PersonaDto currentUser,
             bool Archivio)
         {
             try
@@ -107,15 +109,15 @@ namespace PortaleRegione.BAL
                     || currentUser.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Giunta)
                     idGruppo = currentUser.Gruppo.id_gruppo;
 
-                var result = _unitOfWork.Notifiche
-                    .GetNotificheRicevute(currentUser, idGruppo, Archivio, model.page, model.size, queryFilter)
+                var result = (await _unitOfWork.Notifiche
+                        .GetNotificheRicevute(currentUser, idGruppo, Archivio, model.page, model.size, queryFilter))
                     .Select(Mapper.Map<NOTIFICHE, NotificaDto>)
                     .ToList();
 
                 result.ForEach(async notifica =>
                 {
                     notifica.EM = await _logicEm.GetEM_DTO(notifica.UIDEM, currentUser);
-                    notifica.UTENTI_NoCons = _logicPersone.GetPersona(notifica.Mittente,
+                    notifica.UTENTI_NoCons = await _logicPersone.GetPersona(notifica.Mittente,
                         notifica.EM.id_gruppo >= AppSettingsConfiguration.GIUNTA_REGIONALE_ID);
                 });
 
@@ -132,19 +134,19 @@ namespace PortaleRegione.BAL
 
         #region GetDestinatariNotifica
 
-        public IEnumerable<DestinatariNotificaDto> GetDestinatariNotifica(long notificaId)
+        public async Task<IEnumerable<DestinatariNotificaDto>> GetDestinatariNotifica(long notificaId)
         {
             try
             {
-                var result = _unitOfWork
+                var result = (await _unitOfWork
                     .Notifiche
-                    .GetDestinatariNotifica(notificaId)
+                    .GetDestinatariNotifica(notificaId))
                     .Select(Mapper.Map<NOTIFICHE_DESTINATARI, DestinatariNotificaDto>)
                     .ToList();
 
-                result.ForEach(destinatario =>
+                result.ForEach(async destinatario =>
                 {
-                    destinatario.Firmato = _unitOfWork
+                    destinatario.Firmato = await _unitOfWork
                         .Firme
                         .CheckFirmato(destinatario.NOTIFICHE.UIDEM, destinatario.UIDPersona);
                 });
@@ -172,15 +174,17 @@ namespace PortaleRegione.BAL
                 var sonoPersone = Guid.TryParse(model.ListaDestinatari.First(), out var _);
                 if (sonoPersone)
                 {
-                    listaDestinatari = model.ListaDestinatari
-                        .Select(destinatario => _logicPersone.GetPersona(new Guid(destinatario), false)).ToList();
+                    foreach (var destinatario in model.ListaDestinatari)
+                    {
+                        listaDestinatari.Add(await _logicPersone.GetPersona(new Guid(destinatario), false));
+                    }
                 }
                 else
                 {
                     var sonoGruppi = int.TryParse(model.ListaDestinatari.First(), out var _);
                     if (sonoGruppi)
                         foreach (var gruppoId in model.ListaDestinatari.Select(g => Convert.ToInt32(g)))
-                            listaDestinatari.AddRange(_logicPersone.GetConsiglieriGruppo(gruppoId));
+                            listaDestinatari.AddRange(await _logicPersone.GetConsiglieriGruppo(gruppoId));
                 }
 
                 if (!listaDestinatari.Any())
@@ -226,7 +230,7 @@ namespace PortaleRegione.BAL
                     foreach (var destinatario in listaDestinatari)
                     {
                         var existDestinatario =
-                            _unitOfWork.Notifiche_Destinatari.ExistDestinatarioNotifica(em.UIDEM,
+                            await _unitOfWork.Notifiche_Destinatari.ExistDestinatarioNotifica(em.UIDEM,
                                 destinatario.UID_persona);
 
                         if (!existDestinatario)
@@ -269,7 +273,7 @@ namespace PortaleRegione.BAL
 
         #region CountRicevute
 
-        public int CountRicevute(BaseRequest<NotificaDto> model, PersonaDto currentUser, bool Archivio)
+        public async Task<int> CountRicevute(BaseRequest<NotificaDto> model, PersonaDto currentUser, bool Archivio)
         {
             var queryFilter = new Filter<NOTIFICHE>();
             queryFilter.ImportStatements(model.filtro);
@@ -277,14 +281,14 @@ namespace PortaleRegione.BAL
             if (currentUser.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Politica
                 || currentUser.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Giunta)
                 idGruppo = currentUser.Gruppo.id_gruppo;
-            return _unitOfWork.Notifiche.CountRicevute(currentUser, idGruppo, Archivio, queryFilter);
+            return await _unitOfWork.Notifiche.CountRicevute(currentUser, idGruppo, Archivio, queryFilter);
         }
 
         #endregion
 
         #region CountInviate
 
-        public int CountInviate(BaseRequest<NotificaDto> model, PersonaDto currentUser, bool Archivio)
+        public async Task<int> CountInviate(BaseRequest<NotificaDto> model, PersonaDto currentUser, bool Archivio)
         {
             var queryFilter = new Filter<NOTIFICHE>();
             queryFilter.ImportStatements(model.filtro);
@@ -292,7 +296,7 @@ namespace PortaleRegione.BAL
             if (currentUser.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Politica
                 || currentUser.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Giunta)
                 idGruppo = currentUser.Gruppo.id_gruppo;
-            return _unitOfWork.Notifiche.CountInviate(currentUser, idGruppo, Archivio, queryFilter);
+            return await _unitOfWork.Notifiche.CountInviate(currentUser, idGruppo, Archivio, queryFilter);
         }
 
         #endregion
@@ -303,7 +307,7 @@ namespace PortaleRegione.BAL
         {
             try
             {
-                var destinatario = _unitOfWork
+                var destinatario = await _unitOfWork
                     .Notifiche_Destinatari.Get(notificaId, personaUId);
                 if (destinatario == null)
                     return;
@@ -323,7 +327,7 @@ namespace PortaleRegione.BAL
 
         #region GetListaDestinatari
 
-        public Dictionary<string, string> GetListaDestinatari(Guid atto, TipoDestinatarioNotificaEnum tipo,
+        public async Task<Dictionary<string, string>> GetListaDestinatari(Guid atto, TipoDestinatarioNotificaEnum tipo,
             PersonaDto persona)
         {
             try
@@ -336,25 +340,25 @@ namespace PortaleRegione.BAL
                 switch (tipo)
                 {
                     case TipoDestinatarioNotificaEnum.TUTTI:
-                        result = _logicPersone.GetPersone_DA_CANCELLARE()
+                        result = (await _logicPersone.GetPersone_DA_CANCELLARE())
                             .ToDictionary(p => p.UID_persona.ToString(), s => s.DisplayName);
                         break;
                     case TipoDestinatarioNotificaEnum.CONSIGLIERI_ASSESSORI:
                         if (persona.CurrentRole == RuoliIntEnum.Responsabile_Segreteria_Giunta ||
                             persona.CurrentRole == RuoliIntEnum.Assessore_Sottosegretario_Giunta ||
                             persona.CurrentRole == RuoliIntEnum.Segreteria_Giunta_Regionale)
-                            result = _logicPersone.GetAssessoriRiferimento()
+                            result = (await _logicPersone.GetAssessoriRiferimento())
                                 .ToDictionary(p => p.UID_persona.ToString(), s => s.DisplayName);
                         else
-                            result = _logicPersone.GetConsiglieriGruppo(persona.Gruppo.id_gruppo)
+                            result = (await _logicPersone.GetConsiglieriGruppo(persona.Gruppo.id_gruppo))
                                 .ToDictionary(p => p.UID_persona.ToString(), s => s.DisplayName);
                         break;
                     case TipoDestinatarioNotificaEnum.GRUPPI:
-                        result = _logicPersone.GetGruppi()
+                        result = (await _logicPersone.GetGruppi())
                             .ToDictionary(k => k.id.ToString(), z => z.descr);
                         break;
                     case TipoDestinatarioNotificaEnum.RELATORI:
-                        result = _logicPersone.GetRelatori(atto)
+                        result = (await _logicPersone.GetRelatori(atto))
                             .ToDictionary(k => k.UID_persona.ToString(), z => z.DisplayName);
                         break;
                     default:

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using PortaleRegione.Domain;
 using PortaleRegione.DTO.Domain;
 using PortaleRegione.DTO.Enum;
@@ -30,11 +31,11 @@ namespace PortaleRegione.Contracts
     public interface IFirmeRepository : IRepository<FIRME>
     {
         void Firma(Guid emendamentoUId, Guid personaUId, string firmaCert, string dataFirmaCert, bool ufficio = false);
-        int CountFirme(Guid emendamentoUId);
-        IEnumerable<FIRME> GetFirmatari(EM em, FirmeTipoEnum tipo);
-        void CancellaFirme(Guid emendamentoUId);
-        bool CheckFirmato(Guid emendamentoUId, Guid personaUId);
-        bool CheckIfFirmabile(EmendamentiDto em, PersonaDto persona);
-        bool CheckFirmatoDaUfficio(Guid emedamentoUId);
+        Task<int> CountFirme(Guid emendamentoUId);
+        Task<IEnumerable<FIRME>> GetFirmatari(EM em, FirmeTipoEnum tipo);
+        Task CancellaFirme(Guid emendamentoUId);
+        Task<bool> CheckFirmato(Guid emendamentoUId, Guid personaUId);
+        Task<bool> CheckIfFirmabile(EmendamentiDto em, PersonaDto persona);
+        Task<bool> CheckFirmatoDaUfficio(Guid emedamentoUId);
     }
 }

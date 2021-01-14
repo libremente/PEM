@@ -40,7 +40,7 @@ namespace PortaleRegione.Persistance
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
 
-        public GruppiDto GetGruppoPersona(List<string> LGruppi, bool IsGiunta = false)
+        public async Task<GruppiDto> GetGruppoPersona(List<string> LGruppi, bool IsGiunta = false)
         {
             ///TODO: Controllo se ci sono più di due gruppi rilanciare errore di sistema
 
@@ -59,7 +59,7 @@ namespace PortaleRegione.Persistance
                         id_legislatura = p.id_legislatura
                     });
 
-            var lstGruppi = query.OrderByDescending(g => g.id_gruppo).ToList();
+            var lstGruppi = await query.OrderByDescending(g => g.id_gruppo).ToListAsync();
 
             if (lstGruppi.Count == 2)
             {
@@ -75,7 +75,7 @@ namespace PortaleRegione.Persistance
             return lstGruppi.Any() ? lstGruppi[0] : null;
         }
 
-        public IEnumerable<KeyValueDto> GetAll(int id_legislatura)
+        public async Task<IEnumerable<KeyValueDto>> GetAll(int id_legislatura)
         {
             var query = PRContext
                 .JOIN_GRUPPO_AD
@@ -85,35 +85,35 @@ namespace PortaleRegione.Persistance
                     p => p.id_gruppo,
                     g => g.id_gruppo,
                     (p, g) => g);
-            var lstGruppi = query
+            var lstGruppi = await query
                 .Select(g => new KeyValueDto
                 {
                     id = g.id_gruppo,
                     descr = g.nome_gruppo,
                     sigla = g.codice_gruppo
                 })
-                .ToList();
+                .ToListAsync();
             return lstGruppi;
         }
 
-        public gruppi_politici Get(int gruppoId)
+        public async Task<gruppi_politici> Get(int gruppoId)
         {
-            return PRContext
+            return await PRContext
                 .gruppi_politici
-                .SingleOrDefault(g => g.attivo && g.id_gruppo == gruppoId);
+                .SingleOrDefaultAsync(g => g.attivo && g.id_gruppo == gruppoId);
         }
 
-        public View_UTENTI GetCapoGruppo(int gruppoId)
+        public async Task<View_UTENTI> GetCapoGruppo(int gruppoId)
         {
             var result = PRContext
                 .View_UTENTI
                 .SqlQuery(
                     $"Select * from View_UTENTI where UID_Persona = dbo.get_GUIDCapogruppo_from_idGruppo({gruppoId})");
 
-            return result.Any() ? result.First() : null;
+            return await result.AnyAsync() ? await result.FirstAsync() : null;
         }
 
-        public IEnumerable<View_UTENTI> GetConsiglieriGruppo(int id_legislatura, int id_gruppo)
+        public async Task<IEnumerable<View_UTENTI>> GetConsiglieriGruppo(int id_legislatura, int id_gruppo)
         {
             var query = PRContext
                 .join_persona_gruppi_politici
@@ -131,14 +131,15 @@ namespace PortaleRegione.Persistance
                     u => u,
                     p => p.UID_persona,
                     (u, p) => p);
-            return query.ToList()
+            return (await query.ToListAsync())
                 .Distinct()
                 .OrderBy(p => p.cognome)
                 .ThenBy(p => p.nome)
                 .ToList();
         }
 
-        public IEnumerable<UTENTI_NoCons> GetSegreteriaPolitica(int id, bool notifica_firma, bool notifica_deposito)
+        public async Task<IEnumerable<UTENTI_NoCons>> GetSegreteriaPolitica(int id, bool notifica_firma,
+            bool notifica_deposito)
         {
             var query = PRContext
                 .UTENTI_NoCons
@@ -149,17 +150,17 @@ namespace PortaleRegione.Persistance
             if (notifica_deposito)
                 return query.Where(u => u.notifica_deposito).ToList();
 
-            return query.ToList();
+            return await query.ToListAsync();
         }
 
-        public View_gruppi_politici_con_giunta GetGruppoAttuale(PersonaDto persona, bool isGiunta)
+        public async Task<View_gruppi_politici_con_giunta> GetGruppoAttuale(PersonaDto persona, bool isGiunta)
         {
             var resultViewGruppi = PRContext
                 .View_gruppi_politici_con_giunta
                 .SqlQuery(
                     $"Select * from View_gruppi_politici_con_giunta where id_gruppo = dbo.get_IDgruppoAttuale_from_persona('{persona.UID_persona}', {(isGiunta ? 1 : 0)})");
 
-            return resultViewGruppi.Any() ? resultViewGruppi.First() : null;
+            return await resultViewGruppi.AnyAsync() ? await resultViewGruppi.FirstAsync() : null;
         }
 
         public async Task<IEnumerable<JOIN_GRUPPO_AD>> GetGruppiPoliticiAD(int id_legislatura, bool soloRuoliGiunta)

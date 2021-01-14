@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using PortaleRegione.Contracts;
 using PortaleRegione.DataBase;
 using PortaleRegione.Domain;
@@ -37,35 +38,35 @@ namespace PortaleRegione.Persistance
 
         public PortaleRegioneDbContext PRContext => Context as PortaleRegioneDbContext;
 
-        public bool CheckIfArticoloExists(Guid attoUId, string articolo)
+        public async Task<bool> CheckIfArticoloExists(Guid attoUId, string articolo)
         {
-            return PRContext
+            return await PRContext
                 .ARTICOLI
-                .Any(a => a.UIDAtto == attoUId && a.Articolo.Contains(articolo));
+                .AnyAsync(a => a.UIDAtto == attoUId && a.Articolo.Contains(articolo));
         }
 
-        public IEnumerable<ARTICOLI> GetArticoli(Guid attoUId)
+        public async Task<IEnumerable<ARTICOLI>> GetArticoli(Guid attoUId)
         {
-            return PRContext
+            return await PRContext
                 .ARTICOLI
                 .Where(a => a.UIDAtto == attoUId)
                 .OrderBy(a => a.Ordine)
-                .ToList();
+                .ToListAsync();
         }
 
-        public ARTICOLI GetArticolo(Guid articoloUId)
+        public async Task<ARTICOLI> GetArticolo(Guid articoloUId)
         {
-            return PRContext.ARTICOLI.Find(articoloUId);
+            return await PRContext.ARTICOLI.FindAsync(articoloUId);
         }
 
-        public int OrdineArticolo(Guid attoUId)
+        public async Task<int> OrdineArticolo(Guid attoUId)
         {
-            var list = PRContext
+            var list = await PRContext
                 .ARTICOLI
                 .Where(a => a.UIDAtto == attoUId)
                 .OrderByDescending(a => a.Ordine)
                 .Take(1)
-                .ToList();
+                .ToListAsync();
 
             return list.Any() ? list[0].Ordine + 1 : 1;
         }

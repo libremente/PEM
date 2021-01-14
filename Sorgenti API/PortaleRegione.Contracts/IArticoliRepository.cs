@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using PortaleRegione.Domain;
 
 namespace PortaleRegione.Contracts
@@ -27,9 +28,9 @@ namespace PortaleRegione.Contracts
     /// </summary>
     public interface IArticoliRepository : IRepository<ARTICOLI>
     {
-        bool CheckIfArticoloExists(Guid attoUId, string articolo);
-        IEnumerable<ARTICOLI> GetArticoli(Guid attoUId);
-        ARTICOLI GetArticolo(Guid articoloUId);
-        int OrdineArticolo(Guid attoUId);
+        Task<bool> CheckIfArticoloExists(Guid attoUId, string articolo);
+        Task<IEnumerable<ARTICOLI>> GetArticoli(Guid attoUId);
+        Task<ARTICOLI> GetArticolo(Guid articoloUId);
+        Task<int> OrdineArticolo(Guid attoUId);
     }
 }
