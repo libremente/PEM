@@ -53,6 +53,8 @@ intendedAudience:
 isBasedOn:
   - PEM
 it:
+  riuso:
+    codiceIPA: r_lomb
   conforme:
     gdpr: true
     lineeGuidaDesign: false
